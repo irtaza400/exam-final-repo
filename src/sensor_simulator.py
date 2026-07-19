@@ -1,3 +1,4 @@
+import os
 import json
 import random
 import time
@@ -8,7 +9,7 @@ import paho.mqtt.client as mqtt
 
 BROKER = "localhost"
 PORT = 1883
-TOPIC = "topic127/cleanroom/sensors"
+TOPIC = os.getenv("MQTT_TOPIC", "topic127/raw/cleanroom")
 PUBLISH_INTERVAL_SECONDS = 2
 ABNORMAL_EVENT_PROBABILITY = 0.25
 

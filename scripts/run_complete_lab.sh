@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 
 # ================================================================
-# Topic 127 / exam-new-v3
+# Topic 127 / exam-final-repo
 # Complete Lab Execution Script
 #
 # Responsibilities:
 #   1. Activate the Python virtual environment
 #   2. Start Docker Compose infrastructure
 #   3. Wait for Mosquitto, InfluxDB and Grafana
-#   4. Start MQTT-to-Influx ingestion in the background
-#   5. Start the cleanroom sensor simulator in the background
-#   6. Verify that InfluxDB receives cleanroom data
-#   7. Start local OPC-UA and Modbus servers when required
-#   8. Run the main project orchestrator and validators
-#   9. Run recipe-integrity and TensorFlow/Keras workflows
-#  10. Preserve monitoring services for the live Grafana demo
+#   4. Start the Edge Gateway for validation and enrichment
+#   5. Start MQTT-to-Influx ingestion in the background
+#   6. Start the cleanroom sensor simulator in the background
+#   7. Verify that validated telemetry reaches InfluxDB
+#   8. Start local OPC-UA and Modbus servers when required
+#   9. Run the main project orchestrator
+#  10. Run industrial protocol and recipe-integrity validators
+#  11. Run the TensorFlow/Keras anomaly workflow
+#  12. Preserve monitoring services for the live Grafana demo
 #
 # Usage:
 #   chmod +x scripts/run_complete_lab.sh
@@ -41,7 +43,8 @@ RUNTIME_DIR="${RUNTIME_DIR:-${REPO_ROOT}/.runtime}"
 
 MQTT_BROKER="${MQTT_BROKER:-localhost}"
 MQTT_PORT="${MQTT_PORT:-1883}"
-MQTT_TOPIC="${MQTT_TOPIC:-topic127/cleanroom/sensors}"
+MQTT_RAW_TOPIC="${MQTT_RAW_TOPIC:-topic127/raw/cleanroom}"
+MQTT_VALIDATED_TOPIC="${MQTT_VALIDATED_TOPIC:-topic127/edge/validated}"
 
 INFLUX_URL="${INFLUX_URL:-http://localhost:8086}"
 INFLUX_ORG="${INFLUX_ORG:-topic127}"
@@ -62,11 +65,13 @@ DATA_START_TIMEOUT="${DATA_START_TIMEOUT:-45}"
 STOP_MONITORING_AFTER_LAB="${STOP_MONITORING_AFTER_LAB:-0}"
 
 MQTT_WRITER_PID_FILE="${RUNTIME_DIR}/mqtt_to_influx.pid"
+EDGE_GATEWAY_PID_FILE="${RUNTIME_DIR}/edge_gateway.pid"
 SENSOR_SIM_PID_FILE="${RUNTIME_DIR}/sensor_simulator.pid"
 
 OPCUA_PID=""
 MODBUS_PID=""
 MQTT_WRITER_STARTED_BY_SCRIPT=false
+EDGE_GATEWAY_STARTED_BY_SCRIPT=false
 SENSOR_SIM_STARTED_BY_SCRIPT=false
 
 # ----------------------------------------------------------------
@@ -166,8 +171,9 @@ cleanup() {
 
     if [[ "${STOP_MONITORING_AFTER_LAB}" == "1" ]]; then
         echo "Stopping monitoring services by configuration..."
-        stop_pid_file_process "MQTT-to-Influx writer" "${MQTT_WRITER_PID_FILE}"
         stop_pid_file_process "sensor simulator" "${SENSOR_SIM_PID_FILE}"
+        stop_pid_file_process "Edge Gateway" "${EDGE_GATEWAY_PID_FILE}"
+        stop_pid_file_process "MQTT-to-Influx writer" "${MQTT_WRITER_PID_FILE}"
     else
         echo "Monitoring services will remain running for Grafana."
     fi
@@ -393,7 +399,7 @@ echo "Modbus endpoint   : ${MODBUS_HOST}:${MODBUS_PORT}"
 # ----------------------------------------------------------------
 # Step 1: Activate virtual environment
 # ----------------------------------------------------------------
-section "[1/11] Activating Python virtual environment"
+section "[1/12] Activating Python virtual environment"
 
 if [[ ! -f "${VENV_DIR}/bin/activate" ]]; then
     echo "ERROR: Python virtual environment was not found: ${VENV_DIR}"
@@ -410,7 +416,7 @@ python --version
 # ----------------------------------------------------------------
 # Step 2: Start Docker Compose infrastructure
 # ----------------------------------------------------------------
-section "[2/11] Starting Docker Compose infrastructure"
+section "[2/12] Starting Docker Compose infrastructure"
 
 if ! docker_command_available; then
     echo "ERROR: Docker command is unavailable."
@@ -443,9 +449,26 @@ wait_for_port "Grafana" "${GRAFANA_HOST}" "${GRAFANA_PORT}" "${SERVER_START_TIME
 }
 
 # ----------------------------------------------------------------
-# Step 3: Start MQTT-to-Influx writer
+# Step 3: Start Edge Gateway
 # ----------------------------------------------------------------
-section "[3/11] Starting MQTT-to-Influx ingestion"
+section "[3/12] Starting Edge Gateway"
+
+start_persistent_python_service \
+    "Edge Gateway" \
+    "${REPO_ROOT}/src/edge_gateway.py" \
+    "${LOGS_DIR}/edge_gateway.log" \
+    "${EDGE_GATEWAY_PID_FILE}" \
+    MQTT_BROKER="${MQTT_BROKER}" \
+    MQTT_PORT="${MQTT_PORT}" \
+    MQTT_RAW_TOPIC="${MQTT_RAW_TOPIC}" \
+    MQTT_VALIDATED_TOPIC="${MQTT_VALIDATED_TOPIC}"
+
+EDGE_GATEWAY_STARTED_BY_SCRIPT=true
+
+# ----------------------------------------------------------------
+# Step 4: Start MQTT-to-Influx writer
+# ----------------------------------------------------------------
+section "[4/12] Starting MQTT-to-Influx ingestion"
 
 start_persistent_python_service \
     "MQTT-to-Influx writer" \
@@ -454,7 +477,7 @@ start_persistent_python_service \
     "${MQTT_WRITER_PID_FILE}" \
     MQTT_BROKER="${MQTT_BROKER}" \
     MQTT_PORT="${MQTT_PORT}" \
-    MQTT_TOPIC="${MQTT_TOPIC}" \
+    MQTT_TOPIC="${MQTT_VALIDATED_TOPIC}" \
     INFLUX_URL="${INFLUX_URL}" \
     INFLUX_ORG="${INFLUX_ORG}" \
     INFLUX_BUCKET="${INFLUX_BUCKET}" \
@@ -463,9 +486,9 @@ start_persistent_python_service \
 MQTT_WRITER_STARTED_BY_SCRIPT=true
 
 # ----------------------------------------------------------------
-# Step 4: Start sensor simulator
+# Step 5: Start sensor simulator
 # ----------------------------------------------------------------
-section "[4/11] Starting cleanroom sensor simulator"
+section "[5/12] Starting cleanroom sensor simulator"
 
 start_persistent_python_service \
     "Cleanroom sensor simulator" \
@@ -474,14 +497,14 @@ start_persistent_python_service \
     "${SENSOR_SIM_PID_FILE}" \
     MQTT_BROKER="${MQTT_BROKER}" \
     MQTT_PORT="${MQTT_PORT}" \
-    MQTT_TOPIC="${MQTT_TOPIC}"
+    MQTT_TOPIC="${MQTT_RAW_TOPIC}"
 
 SENSOR_SIM_STARTED_BY_SCRIPT=true
 
 # ----------------------------------------------------------------
-# Step 5: Verify monitoring pipeline
+# Step 6: Verify monitoring pipeline
 # ----------------------------------------------------------------
-section "[5/11] Verifying MQTT-to-Influx monitoring pipeline"
+section "[6/12] Verifying Edge Gateway and MQTT-to-Influx pipeline"
 
 if ! wait_for_influx_data; then
     echo "ERROR: No cleanroom data appeared in InfluxDB within ${DATA_START_TIMEOUT} seconds."
@@ -497,9 +520,9 @@ fi
 success "Live cleanroom monitoring pipeline is working."
 
 # ----------------------------------------------------------------
-# Step 6: Start OPC-UA server
+# Step 7: Start OPC-UA server
 # ----------------------------------------------------------------
-section "[6/11] Starting OPC-UA server"
+section "[7/12] Starting OPC-UA server"
 
 if port_is_open "${OPCUA_HOST}" "${OPCUA_PORT}"; then
     echo "OPC-UA server is already reachable at ${OPCUA_HOST}:${OPCUA_PORT}."
@@ -520,9 +543,9 @@ if ! wait_for_port "OPC-UA server" "${OPCUA_HOST}" "${OPCUA_PORT}" "${SERVER_STA
 fi
 
 # ----------------------------------------------------------------
-# Step 7: Start Modbus server
+# Step 8: Start Modbus server
 # ----------------------------------------------------------------
-section "[7/11] Starting Modbus server"
+section "[8/12] Starting Modbus server"
 
 if port_is_open "${MODBUS_HOST}" "${MODBUS_PORT}"; then
     echo "Modbus server is already reachable at ${MODBUS_HOST}:${MODBUS_PORT}."
@@ -543,9 +566,9 @@ if ! wait_for_port "Modbus server" "${MODBUS_HOST}" "${MODBUS_PORT}" "${SERVER_S
 fi
 
 # ----------------------------------------------------------------
-# Step 8: Run project orchestrator
+# Step 9: Run project orchestrator
 # ----------------------------------------------------------------
-section "[8/11] Running main project orchestrator"
+section "[9/12] Running main project orchestrator"
 
 ORCHESTRATOR_SCRIPT="${REPO_ROOT}/src/project_orchestrator.py"
 
@@ -565,9 +588,9 @@ if [[ "${ORCHESTRATOR_EXIT_CODE}" -ne 0 ]]; then
 fi
 
 # ----------------------------------------------------------------
-# Step 9: Run industrial and recipe validators
+# Step 10: Run industrial and recipe validators
 # ----------------------------------------------------------------
-section "[9/11] Running industrial protocol and recipe validators"
+section "[10/12] Running industrial protocol and recipe validators"
 
 run_optional_python_component \
     "OPC-UA client validator" \
@@ -585,9 +608,9 @@ run_optional_python_component \
     "${LOGS_DIR}/recipe_integrity_check.log"
 
 # ----------------------------------------------------------------
-# Step 10: Run TensorFlow/Keras engine
+# Step 11: Run TensorFlow/Keras engine
 # ----------------------------------------------------------------
-section "[10/11] Running TensorFlow/Keras anomaly engine"
+section "[11/12] Running TensorFlow/Keras anomaly engine"
 
 TENSORFLOW_SCRIPT="${REPO_ROOT}/scripts/run_tensorflow_ml.sh"
 
@@ -607,15 +630,17 @@ else
 fi
 
 # ----------------------------------------------------------------
-# Step 11: Final summary
+# Step 12: Final summary
 # ----------------------------------------------------------------
-section "[11/11] Complete Lab Execution Finished"
+section "[12/12] Complete Lab Execution Finished"
 
 MQTT_WRITER_PID="$(read_pid_file "${MQTT_WRITER_PID_FILE}")"
+EDGE_GATEWAY_PID="$(read_pid_file "${EDGE_GATEWAY_PID_FILE}")"
 SENSOR_SIM_PID="$(read_pid_file "${SENSOR_SIM_PID_FILE}")"
 
 echo "Monitoring services:"
-echo "  MQTT-to-Influx PID : ${MQTT_WRITER_PID:-unknown}"
+echo "  MQTT-to-Influx PID  : ${MQTT_WRITER_PID:-unknown}"
+echo "  Edge Gateway PID    : ${EDGE_GATEWAY_PID:-unknown}"
 echo "  Sensor simulator PID: ${SENSOR_SIM_PID:-unknown}"
 echo
 echo "Grafana dashboard:"
