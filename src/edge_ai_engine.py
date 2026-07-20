@@ -524,7 +524,7 @@ class EdgeAIService:
     ) -> None:
         del userdata, flags, properties
 
-        if int(reason_code) != 0:
+        if reason_code.is_failure:
             LOGGER.error(
                 "MQTT connection failed with reason code %s.",
                 reason_code,
