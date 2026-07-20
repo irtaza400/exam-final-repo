@@ -16,7 +16,8 @@
 #   9. Run the main project orchestrator
 #  10. Run industrial protocol and recipe-integrity validators
 #  11. Run the TensorFlow/Keras anomaly workflow
-#  12. Preserve monitoring services for the live Grafana demo
+#  12. Refresh final compliance, incident and project reports
+#  13. Preserve monitoring services for the live Grafana demo
 #
 # Usage:
 #   chmod +x scripts/run_complete_lab.sh
@@ -399,7 +400,7 @@ echo "Modbus endpoint   : ${MODBUS_HOST}:${MODBUS_PORT}"
 # ----------------------------------------------------------------
 # Step 1: Activate virtual environment
 # ----------------------------------------------------------------
-section "[1/12] Activating Python virtual environment"
+section "[1/13] Activating Python virtual environment"
 
 if [[ ! -f "${VENV_DIR}/bin/activate" ]]; then
     echo "ERROR: Python virtual environment was not found: ${VENV_DIR}"
@@ -416,7 +417,7 @@ python --version
 # ----------------------------------------------------------------
 # Step 2: Start Docker Compose infrastructure
 # ----------------------------------------------------------------
-section "[2/12] Starting Docker Compose infrastructure"
+section "[2/13] Starting Docker Compose infrastructure"
 
 if ! docker_command_available; then
     echo "ERROR: Docker command is unavailable."
@@ -451,7 +452,7 @@ wait_for_port "Grafana" "${GRAFANA_HOST}" "${GRAFANA_PORT}" "${SERVER_START_TIME
 # ----------------------------------------------------------------
 # Step 3: Start Edge Gateway
 # ----------------------------------------------------------------
-section "[3/12] Starting Edge Gateway"
+section "[3/13] Starting Edge Gateway"
 
 start_persistent_python_service \
     "Edge Gateway" \
@@ -468,7 +469,7 @@ EDGE_GATEWAY_STARTED_BY_SCRIPT=true
 # ----------------------------------------------------------------
 # Step 4: Start MQTT-to-Influx writer
 # ----------------------------------------------------------------
-section "[4/12] Starting MQTT-to-Influx ingestion"
+section "[4/13] Starting MQTT-to-Influx ingestion"
 
 start_persistent_python_service \
     "MQTT-to-Influx writer" \
@@ -488,7 +489,7 @@ MQTT_WRITER_STARTED_BY_SCRIPT=true
 # ----------------------------------------------------------------
 # Step 5: Start sensor simulator
 # ----------------------------------------------------------------
-section "[5/12] Starting cleanroom sensor simulator"
+section "[5/13] Starting cleanroom sensor simulator"
 
 start_persistent_python_service \
     "Cleanroom sensor simulator" \
@@ -504,7 +505,7 @@ SENSOR_SIM_STARTED_BY_SCRIPT=true
 # ----------------------------------------------------------------
 # Step 6: Verify monitoring pipeline
 # ----------------------------------------------------------------
-section "[6/12] Verifying Edge Gateway and MQTT-to-Influx pipeline"
+section "[6/13] Verifying Edge Gateway and MQTT-to-Influx pipeline"
 
 if ! wait_for_influx_data; then
     echo "ERROR: No cleanroom data appeared in InfluxDB within ${DATA_START_TIMEOUT} seconds."
@@ -522,7 +523,7 @@ success "Live cleanroom monitoring pipeline is working."
 # ----------------------------------------------------------------
 # Step 7: Start OPC-UA server
 # ----------------------------------------------------------------
-section "[7/12] Starting OPC-UA server"
+section "[7/13] Starting OPC-UA server"
 
 if port_is_open "${OPCUA_HOST}" "${OPCUA_PORT}"; then
     echo "OPC-UA server is already reachable at ${OPCUA_HOST}:${OPCUA_PORT}."
@@ -545,7 +546,7 @@ fi
 # ----------------------------------------------------------------
 # Step 8: Start Modbus server
 # ----------------------------------------------------------------
-section "[8/12] Starting Modbus server"
+section "[8/13] Starting Modbus server"
 
 if port_is_open "${MODBUS_HOST}" "${MODBUS_PORT}"; then
     echo "Modbus server is already reachable at ${MODBUS_HOST}:${MODBUS_PORT}."
@@ -568,7 +569,7 @@ fi
 # ----------------------------------------------------------------
 # Step 9: Run project orchestrator
 # ----------------------------------------------------------------
-section "[9/12] Running main project orchestrator"
+section "[9/13] Running main project orchestrator"
 
 ORCHESTRATOR_SCRIPT="${REPO_ROOT}/src/project_orchestrator.py"
 
@@ -590,7 +591,7 @@ fi
 # ----------------------------------------------------------------
 # Step 10: Run industrial and recipe validators
 # ----------------------------------------------------------------
-section "[10/12] Running industrial protocol and recipe validators"
+section "[10/13] Running industrial protocol and recipe validators"
 
 run_optional_python_component \
     "OPC-UA client validator" \
@@ -610,7 +611,7 @@ run_optional_python_component \
 # ----------------------------------------------------------------
 # Step 11: Run TensorFlow/Keras engine
 # ----------------------------------------------------------------
-section "[11/12] Running TensorFlow/Keras anomaly engine"
+section "[11/13] Running TensorFlow/Keras anomaly engine"
 
 TENSORFLOW_SCRIPT="${REPO_ROOT}/scripts/run_tensorflow_ml.sh"
 
@@ -630,9 +631,44 @@ else
 fi
 
 # ----------------------------------------------------------------
-# Step 12: Final summary
+# Step 12: Refresh final evidence and reports
 # ----------------------------------------------------------------
-section "[12/12] Complete Lab Execution Finished"
+section "[12/13] Refreshing final compliance and project evidence"
+
+run_optional_python_component \
+    "Final compliance report refresh" \
+    "${REPO_ROOT}/src/compliance_report_generator.py" \
+    "${LOGS_DIR}/final_compliance_report.log"
+
+run_optional_python_component \
+    "Final audit log refresh" \
+    "${REPO_ROOT}/src/audit_logger.py" \
+    "${LOGS_DIR}/final_audit_logger.log"
+
+run_optional_python_component \
+    "Final incident summary refresh" \
+    "${REPO_ROOT}/src/incident_manager.py" \
+    "${LOGS_DIR}/final_incident_manager.log"
+
+run_optional_python_component \
+    "Final dashboard healthcheck refresh" \
+    "${REPO_ROOT}/src/dashboard_healthcheck.py" \
+    "${LOGS_DIR}/final_dashboard_healthcheck.log"
+
+run_optional_python_component \
+    "Final DevSecOps scan refresh" \
+    "${REPO_ROOT}/src/devsecops_scan.py" \
+    "${LOGS_DIR}/final_devsecops_scan.log"
+
+run_optional_python_component \
+    "Final project report refresh" \
+    "${REPO_ROOT}/src/final_report_generator.py" \
+    "${LOGS_DIR}/final_project_report.log"
+
+# ----------------------------------------------------------------
+# Step 13: Final summary
+# ----------------------------------------------------------------
+section "[13/13] Complete Lab Execution Finished"
 
 MQTT_WRITER_PID="$(read_pid_file "${MQTT_WRITER_PID_FILE}")"
 EDGE_GATEWAY_PID="$(read_pid_file "${EDGE_GATEWAY_PID_FILE}")"
@@ -656,13 +692,16 @@ find "${LOGS_DIR}" -maxdepth 1 -type f -printf '  %p\n' 2>/dev/null | sort || tr
 echo
 echo "Useful commands:"
 echo "  docker compose ps"
+echo "  tail -f logs/edge_gateway.log"
 echo "  tail -f logs/mqtt_to_influx.log"
 echo "  tail -f logs/sensor_simulator.log"
 echo "  docker exec topic127-influxdb influx query 'from(bucket: \"cleanroom\") |> range(start: -5m) |> last()' --org topic127 --token topic127-token"
 echo
 echo "To stop monitoring services later:"
+echo "  kill \$(cat .runtime/edge_gateway.pid) 2>/dev/null || true"
 echo "  kill \$(cat .runtime/mqtt_to_influx.pid) 2>/dev/null || true"
 echo "  kill \$(cat .runtime/sensor_simulator.pid) 2>/dev/null || true"
+echo "  docker compose down"
 echo
 echo "============================================================"
 echo "Topic 127 complete lab execution finished successfully."
