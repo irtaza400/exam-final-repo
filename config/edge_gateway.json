@@ -1,0 +1,42 @@
+{
+  "gateway_id": "edge-gateway-01",
+  "input_topic": "topic127/raw/cleanroom",
+  "output_topic": "topic127/edge/validated",
+  "rejected_topic": "topic127/edge/rejected",
+  "status_topic": "topic127/edge/status",
+  "required_fields": [
+    "timestamp",
+    "machine_id",
+    "zone",
+    "process",
+    "event_status",
+    "particle_count",
+    "temperature",
+    "humidity",
+    "airflow",
+    "gas_ppm",
+    "ppe_compliant"
+  ],
+  "validation_ranges": {
+    "particle_count": {
+      "min": 0,
+      "max": 100000
+    },
+    "temperature": {
+      "min": -20,
+      "max": 80
+    },
+    "humidity": {
+      "min": 0,
+      "max": 100
+    },
+    "airflow": {
+      "min": 0,
+      "max": 10
+    },
+    "gas_ppm": {
+      "min": 0,
+      "max": 10000
+    }
+  }
+}

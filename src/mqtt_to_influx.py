@@ -6,7 +6,7 @@ from influxdb_client import InfluxDBClient, Point, WritePrecision
 
 BROKER = os.getenv("MQTT_BROKER", "localhost")
 PORT = int(os.getenv("MQTT_PORT", "1883"))
-TOPIC = "topic127/cleanroom/sensors"
+TOPIC = os.getenv("MQTT_TOPIC", "topic127/edge/validated")
 
 INFLUX_URL = os.getenv("INFLUX_URL", "http://localhost:8086")
 TOKEN = os.getenv("INFLUX_TOKEN", "topic127-token")
