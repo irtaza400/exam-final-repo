@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ================================================================
-# Topic 127 / exam-new-v3
+# Topic 127 / exam-final-repo
 # One-Command Examiner Demonstration
 #
 # Purpose:
@@ -105,6 +105,14 @@ cleanup() {
     local exit_code=$?
 
     if [[ "${STOP_MONITORING_AFTER_DEMO}" == "1" ]]; then
+        stop_runtime_process \
+            "Edge Gateway" \
+            "${RUNTIME_DIR}/edge_gateway.pid"
+
+        stop_runtime_process \
+            "Edge AI engine" \
+            "${RUNTIME_DIR}/edge_ai.pid"
+
         stop_runtime_process \
             "MQTT-to-Influx writer" \
             "${RUNTIME_DIR}/mqtt_to_influx.pid"
@@ -210,6 +218,9 @@ REQUIRED_FILES=(
     "scripts/run_complete_lab.sh"
     "scripts/simulate_recipe_tamper.sh"
     "src/project_orchestrator.py"
+    "src/edge_gateway.py"
+    "src/edge_ai_engine.py"
+    "config/edge_ai.json"
     "src/mqtt_to_influx.py"
     "src/sensor_simulator.py"
     "src/opcua_server.py"
@@ -304,6 +315,8 @@ fi
 
 # Confirm monitoring processes still exist.
 for pid_file in \
+    "${RUNTIME_DIR}/edge_gateway.pid" \
+    "${RUNTIME_DIR}/edge_ai.pid" \
     "${RUNTIME_DIR}/mqtt_to_influx.pid" \
     "${RUNTIME_DIR}/sensor_simulator.pid"; do
 
@@ -421,6 +434,8 @@ section "[8/9] Creating examination summary"
 
 DEMO_END_EPOCH="$(date +%s)"
 DEMO_DURATION=$((DEMO_END_EPOCH - DEMO_START_EPOCH))
+EDGE_GATEWAY_PID="$(tr -d '[:space:]' < "${RUNTIME_DIR}/edge_gateway.pid")"
+EDGE_AI_PID="$(tr -d '[:space:]' < "${RUNTIME_DIR}/edge_ai.pid")"
 MQTT_WRITER_PID="$(tr -d '[:space:]' < "${RUNTIME_DIR}/mqtt_to_influx.pid")"
 SENSOR_SIM_PID="$(tr -d '[:space:]' < "${RUNTIME_DIR}/sensor_simulator.pid")"
 
@@ -433,11 +448,15 @@ SENSOR_SIM_PID="$(tr -d '[:space:]' < "${RUNTIME_DIR}/sensor_simulator.pid")"
     echo "Repository          : ${REPO_ROOT}"
     echo "Python              : $(python --version 2>&1)"
     echo "Duration            : ${DEMO_DURATION} seconds"
+    echo "Edge Gateway PID    : ${EDGE_GATEWAY_PID}"
+    echo "Edge AI PID         : ${EDGE_AI_PID}"
     echo "MQTT writer PID     : ${MQTT_WRITER_PID}"
     echo "Sensor simulator PID: ${SENSOR_SIM_PID}"
     echo
     echo "Completed workflow:"
     echo "  - Docker Compose infrastructure"
+    echo "  - Edge Gateway validation and telemetry forwarding"
+    echo "  - Explainable Edge AI inference and alert generation"
     echo "  - MQTT-to-Influx ingestion"
     echo "  - Continuous cleanroom sensor simulation"
     echo "  - InfluxDB data verification"
@@ -480,6 +499,8 @@ echo "InfluxDB:"
 echo "  http://EC2-PUBLIC-IP:8086"
 echo
 echo "Live monitoring logs:"
+echo "  tail -f logs/edge_gateway.log"
+echo "  tail -f logs/edge_ai.log"
 echo "  tail -f logs/mqtt_to_influx.log"
 echo "  tail -f logs/sensor_simulator.log"
 echo
@@ -499,6 +520,8 @@ else
     echo
     echo "Monitoring services will remain running for the live Grafana demo."
     echo "Stop them later with:"
+    echo "  kill \$(cat .runtime/edge_gateway.pid) 2>/dev/null || true"
+    echo "  kill \$(cat .runtime/edge_ai.pid) 2>/dev/null || true"
     echo "  kill \$(cat .runtime/mqtt_to_influx.pid) 2>/dev/null || true"
     echo "  kill \$(cat .runtime/sensor_simulator.pid) 2>/dev/null || true"
 fi
