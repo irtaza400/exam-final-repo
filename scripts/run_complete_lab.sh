@@ -9,15 +9,16 @@
 #   2. Start Docker Compose infrastructure
 #   3. Wait for Mosquitto, InfluxDB and Grafana
 #   4. Start the Edge Gateway for validation and enrichment
-#   5. Start MQTT-to-Influx ingestion in the background
-#   6. Start the cleanroom sensor simulator in the background
-#   7. Verify that validated telemetry reaches InfluxDB
-#   8. Start local OPC-UA and Modbus servers when required
-#   9. Run the main project orchestrator
-#  10. Run industrial protocol and recipe-integrity validators
-#  11. Run the TensorFlow/Keras anomaly workflow
-#  12. Refresh final compliance, incident and project reports
-#  13. Preserve monitoring services for the live Grafana demo
+#   5. Start the custom Edge AI inference service
+#   6. Start MQTT-to-Influx ingestion in the background
+#   7. Start the cleanroom sensor simulator in the background
+#   8. Verify that validated telemetry reaches InfluxDB
+#   9. Start local OPC-UA and Modbus servers when required
+#  10. Run the main project orchestrator
+#  11. Run industrial protocol and recipe-integrity validators
+#  12. Run the TensorFlow/Keras anomaly workflow
+#  13. Refresh final compliance, incident and project reports
+#  14. Preserve monitoring services for the live Grafana demo
 #
 # Usage:
 #   chmod +x scripts/run_complete_lab.sh
@@ -46,6 +47,8 @@ MQTT_BROKER="${MQTT_BROKER:-localhost}"
 MQTT_PORT="${MQTT_PORT:-1883}"
 MQTT_RAW_TOPIC="${MQTT_RAW_TOPIC:-topic127/raw/cleanroom}"
 MQTT_VALIDATED_TOPIC="${MQTT_VALIDATED_TOPIC:-topic127/edge/validated}"
+EDGE_AI_RESULT_TOPIC="${EDGE_AI_RESULT_TOPIC:-topic127/edge/ai/result}"
+EDGE_AI_ALERT_TOPIC="${EDGE_AI_ALERT_TOPIC:-topic127/edge/ai/alert}"
 
 INFLUX_URL="${INFLUX_URL:-http://localhost:8086}"
 INFLUX_ORG="${INFLUX_ORG:-topic127}"
@@ -67,12 +70,14 @@ STOP_MONITORING_AFTER_LAB="${STOP_MONITORING_AFTER_LAB:-0}"
 
 MQTT_WRITER_PID_FILE="${RUNTIME_DIR}/mqtt_to_influx.pid"
 EDGE_GATEWAY_PID_FILE="${RUNTIME_DIR}/edge_gateway.pid"
+EDGE_AI_PID_FILE="${RUNTIME_DIR}/edge_ai.pid"
 SENSOR_SIM_PID_FILE="${RUNTIME_DIR}/sensor_simulator.pid"
 
 OPCUA_PID=""
 MODBUS_PID=""
 MQTT_WRITER_STARTED_BY_SCRIPT=false
 EDGE_GATEWAY_STARTED_BY_SCRIPT=false
+EDGE_AI_STARTED_BY_SCRIPT=false
 SENSOR_SIM_STARTED_BY_SCRIPT=false
 
 # ----------------------------------------------------------------
@@ -173,6 +178,7 @@ cleanup() {
     if [[ "${STOP_MONITORING_AFTER_LAB}" == "1" ]]; then
         echo "Stopping monitoring services by configuration..."
         stop_pid_file_process "sensor simulator" "${SENSOR_SIM_PID_FILE}"
+        stop_pid_file_process "Edge AI engine" "${EDGE_AI_PID_FILE}"
         stop_pid_file_process "Edge Gateway" "${EDGE_GATEWAY_PID_FILE}"
         stop_pid_file_process "MQTT-to-Influx writer" "${MQTT_WRITER_PID_FILE}"
     else
@@ -400,7 +406,7 @@ echo "Modbus endpoint   : ${MODBUS_HOST}:${MODBUS_PORT}"
 # ----------------------------------------------------------------
 # Step 1: Activate virtual environment
 # ----------------------------------------------------------------
-section "[1/13] Activating Python virtual environment"
+section "[1/14] Activating Python virtual environment"
 
 if [[ ! -f "${VENV_DIR}/bin/activate" ]]; then
     echo "ERROR: Python virtual environment was not found: ${VENV_DIR}"
@@ -417,7 +423,7 @@ python --version
 # ----------------------------------------------------------------
 # Step 2: Start Docker Compose infrastructure
 # ----------------------------------------------------------------
-section "[2/13] Starting Docker Compose infrastructure"
+section "[2/14] Starting Docker Compose infrastructure"
 
 if ! docker_command_available; then
     echo "ERROR: Docker command is unavailable."
@@ -452,7 +458,7 @@ wait_for_port "Grafana" "${GRAFANA_HOST}" "${GRAFANA_PORT}" "${SERVER_START_TIME
 # ----------------------------------------------------------------
 # Step 3: Start Edge Gateway
 # ----------------------------------------------------------------
-section "[3/13] Starting Edge Gateway"
+section "[3/14] Starting Edge Gateway"
 
 start_persistent_python_service \
     "Edge Gateway" \
@@ -467,9 +473,28 @@ start_persistent_python_service \
 EDGE_GATEWAY_STARTED_BY_SCRIPT=true
 
 # ----------------------------------------------------------------
-# Step 4: Start MQTT-to-Influx writer
+# Step 4: Start Edge AI engine
 # ----------------------------------------------------------------
-section "[4/13] Starting MQTT-to-Influx ingestion"
+section "[4/14] Starting Edge AI inference service"
+
+start_persistent_python_service \
+    "Edge AI engine" \
+    "${REPO_ROOT}/src/edge_ai_engine.py" \
+    "${LOGS_DIR}/edge_ai.log" \
+    "${EDGE_AI_PID_FILE}" \
+    MQTT_BROKER="${MQTT_BROKER}" \
+    MQTT_PORT="${MQTT_PORT}" \
+    EDGE_AI_INPUT_TOPIC="${MQTT_VALIDATED_TOPIC}" \
+    EDGE_AI_RESULT_TOPIC="${EDGE_AI_RESULT_TOPIC}" \
+    EDGE_AI_ALERT_TOPIC="${EDGE_AI_ALERT_TOPIC}" \
+    EDGE_AI_CONFIG="${REPO_ROOT}/config/edge_ai.json"
+
+EDGE_AI_STARTED_BY_SCRIPT=true
+
+# ----------------------------------------------------------------
+# Step 5: Start MQTT-to-Influx writer
+# ----------------------------------------------------------------
+section "[5/14] Starting MQTT-to-Influx ingestion"
 
 start_persistent_python_service \
     "MQTT-to-Influx writer" \
@@ -487,9 +512,9 @@ start_persistent_python_service \
 MQTT_WRITER_STARTED_BY_SCRIPT=true
 
 # ----------------------------------------------------------------
-# Step 5: Start sensor simulator
+# Step 6: Start sensor simulator
 # ----------------------------------------------------------------
-section "[5/13] Starting cleanroom sensor simulator"
+section "[6/14] Starting cleanroom sensor simulator"
 
 start_persistent_python_service \
     "Cleanroom sensor simulator" \
@@ -503,9 +528,9 @@ start_persistent_python_service \
 SENSOR_SIM_STARTED_BY_SCRIPT=true
 
 # ----------------------------------------------------------------
-# Step 6: Verify monitoring pipeline
+# Step 7: Verify monitoring pipeline
 # ----------------------------------------------------------------
-section "[6/13] Verifying Edge Gateway and MQTT-to-Influx pipeline"
+section "[7/14] Verifying Edge Gateway, Edge AI and MQTT-to-Influx pipeline"
 
 if ! wait_for_influx_data; then
     echo "ERROR: No cleanroom data appeared in InfluxDB within ${DATA_START_TIMEOUT} seconds."
@@ -523,7 +548,7 @@ success "Live cleanroom monitoring pipeline is working."
 # ----------------------------------------------------------------
 # Step 7: Start OPC-UA server
 # ----------------------------------------------------------------
-section "[7/13] Starting OPC-UA server"
+section "[8/14] Starting OPC-UA server"
 
 if port_is_open "${OPCUA_HOST}" "${OPCUA_PORT}"; then
     echo "OPC-UA server is already reachable at ${OPCUA_HOST}:${OPCUA_PORT}."
@@ -546,7 +571,7 @@ fi
 # ----------------------------------------------------------------
 # Step 8: Start Modbus server
 # ----------------------------------------------------------------
-section "[8/13] Starting Modbus server"
+section "[9/14] Starting Modbus server"
 
 if port_is_open "${MODBUS_HOST}" "${MODBUS_PORT}"; then
     echo "Modbus server is already reachable at ${MODBUS_HOST}:${MODBUS_PORT}."
@@ -569,7 +594,7 @@ fi
 # ----------------------------------------------------------------
 # Step 9: Run project orchestrator
 # ----------------------------------------------------------------
-section "[9/13] Running main project orchestrator"
+section "[10/14] Running main project orchestrator"
 
 ORCHESTRATOR_SCRIPT="${REPO_ROOT}/src/project_orchestrator.py"
 
@@ -591,7 +616,7 @@ fi
 # ----------------------------------------------------------------
 # Step 10: Run industrial and recipe validators
 # ----------------------------------------------------------------
-section "[10/13] Running industrial protocol and recipe validators"
+section "[11/14] Running industrial protocol and recipe validators"
 
 run_optional_python_component \
     "OPC-UA client validator" \
@@ -611,7 +636,7 @@ run_optional_python_component \
 # ----------------------------------------------------------------
 # Step 11: Run TensorFlow/Keras engine
 # ----------------------------------------------------------------
-section "[11/13] Running TensorFlow/Keras anomaly engine"
+section "[12/14] Running TensorFlow/Keras anomaly engine"
 
 TENSORFLOW_SCRIPT="${REPO_ROOT}/scripts/run_tensorflow_ml.sh"
 
@@ -633,7 +658,7 @@ fi
 # ----------------------------------------------------------------
 # Step 12: Refresh final evidence and reports
 # ----------------------------------------------------------------
-section "[12/13] Refreshing final compliance and project evidence"
+section "[13/14] Refreshing final compliance and project evidence"
 
 run_optional_python_component \
     "Final compliance report refresh" \
@@ -666,17 +691,19 @@ run_optional_python_component \
     "${LOGS_DIR}/final_project_report.log"
 
 # ----------------------------------------------------------------
-# Step 13: Final summary
+# Step 14: Final summary
 # ----------------------------------------------------------------
-section "[13/13] Complete Lab Execution Finished"
+section "[14/14] Complete Lab Execution Finished"
 
 MQTT_WRITER_PID="$(read_pid_file "${MQTT_WRITER_PID_FILE}")"
 EDGE_GATEWAY_PID="$(read_pid_file "${EDGE_GATEWAY_PID_FILE}")"
+EDGE_AI_PID="$(read_pid_file "${EDGE_AI_PID_FILE}")"
 SENSOR_SIM_PID="$(read_pid_file "${SENSOR_SIM_PID_FILE}")"
 
 echo "Monitoring services:"
 echo "  MQTT-to-Influx PID  : ${MQTT_WRITER_PID:-unknown}"
 echo "  Edge Gateway PID    : ${EDGE_GATEWAY_PID:-unknown}"
+echo "  Edge AI PID         : ${EDGE_AI_PID:-unknown}"
 echo "  Sensor simulator PID: ${SENSOR_SIM_PID:-unknown}"
 echo
 echo "Grafana dashboard:"
@@ -693,12 +720,14 @@ echo
 echo "Useful commands:"
 echo "  docker compose ps"
 echo "  tail -f logs/edge_gateway.log"
+echo "  tail -f logs/edge_ai.log"
 echo "  tail -f logs/mqtt_to_influx.log"
 echo "  tail -f logs/sensor_simulator.log"
 echo "  docker exec topic127-influxdb influx query 'from(bucket: \"cleanroom\") |> range(start: -5m) |> last()' --org topic127 --token topic127-token"
 echo
 echo "To stop monitoring services later:"
 echo "  kill \$(cat .runtime/edge_gateway.pid) 2>/dev/null || true"
+echo "  kill \$(cat .runtime/edge_ai.pid) 2>/dev/null || true"
 echo "  kill \$(cat .runtime/mqtt_to_influx.pid) 2>/dev/null || true"
 echo "  kill \$(cat .runtime/sensor_simulator.pid) 2>/dev/null || true"
 echo "  docker compose down"
