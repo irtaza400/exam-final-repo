@@ -1,0 +1,54 @@
+{
+  "engine": {
+    "name": "topic127-edge-ai",
+    "version": "1.0.0",
+    "mode": "custom-rule-based",
+    "site": "nanotechnology-manufacturing-lab"
+  },
+  "mqtt": {
+    "host": "localhost",
+    "port": 1883,
+    "keepalive": 60,
+    "input_topic": "topic127/edge/validated",
+    "result_topic": "topic127/edge/ai/result",
+    "alert_topic": "topic127/edge/ai/alert",
+    "client_id": "topic127-edge-ai-engine",
+    "qos": 1
+  },
+  "thresholds": {
+    "particle_count": {
+      "warning": 800.0,
+      "critical": 1200.0,
+      "weight": 0.25
+    },
+    "temperature": {
+      "minimum": 18.0,
+      "warning_high": 26.0,
+      "critical_high": 30.0,
+      "weight": 0.15
+    },
+    "humidity": {
+      "minimum": 35.0,
+      "warning_high": 55.0,
+      "critical_high": 65.0,
+      "weight": 0.15
+    },
+    "airflow": {
+      "critical_low": 0.20,
+      "warning_low": 0.30,
+      "weight": 0.20
+    },
+    "gas_ppm": {
+      "warning": 50.0,
+      "critical": 75.0,
+      "weight": 0.20
+    },
+    "ppe_compliant": {
+      "weight": 0.05
+    }
+  },
+  "risk": {
+    "warning_score": 0.30,
+    "critical_score": 0.60
+  }
+}
