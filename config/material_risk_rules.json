@@ -1,0 +1,20 @@
+{
+  "risk_weights": {
+    "supplier_not_approved": 30,
+    "supplier_not_active": 40,
+    "certificate_missing": 40,
+    "certificate_expired": 40,
+    "certificate_revoked": 50,
+    "quality_failed": 30,
+    "quality_review_required": 20,
+    "export_risk_medium": 15,
+    "export_risk_high": 30,
+    "country_risk_medium": 10,
+    "country_risk_high": 20
+  },
+  "decision_thresholds": {
+    "approve_max": 39,
+    "quarantine_max": 69,
+    "reject_min": 70
+  }
+}

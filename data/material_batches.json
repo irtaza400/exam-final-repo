@@ -1,0 +1,98 @@
+[
+  {
+    "batch_id": "BATCH-PR-001",
+    "supplier_id": "SUP-NANO-001",
+    "material": "photoresist precursor",
+    "lot_number": "LOT-PR-2026-001",
+    "manufactured_at": "2026-07-01",
+    "expires_at": "2027-07-01",
+    "certificate": {
+      "certificate_id": "COA-PR-001",
+      "status": "VALID",
+      "issued_at": "2026-07-01",
+      "expires_at": "2027-07-01"
+    },
+    "quality_status": "PASSED",
+    "export_risk": "LOW"
+  },
+  {
+    "batch_id": "BATCH-GAS-002",
+    "supplier_id": "SUP-GAS-002",
+    "material": "etching gas",
+    "lot_number": "LOT-GAS-2026-002",
+    "manufactured_at": "2026-06-15",
+    "expires_at": "2027-06-15",
+    "certificate": {
+      "certificate_id": "COA-GAS-002",
+      "status": "VALID",
+      "issued_at": "2026-06-15",
+      "expires_at": "2027-06-15"
+    },
+    "quality_status": "PASSED",
+    "export_risk": "MEDIUM"
+  },
+  {
+    "batch_id": "BATCH-DU-003",
+    "supplier_id": "SUP-UNKNOWN-999",
+    "material": "dual-use nanomaterial precursor",
+    "lot_number": "LOT-DU-2026-003",
+    "manufactured_at": "2026-05-01",
+    "expires_at": "2027-05-01",
+    "certificate": {
+      "certificate_id": null,
+      "status": "MISSING",
+      "issued_at": null,
+      "expires_at": null
+    },
+    "quality_status": "REVIEW_REQUIRED",
+    "export_risk": "HIGH"
+  },
+  {
+    "batch_id": "BATCH-EXP-004",
+    "supplier_id": "SUP-NANO-001",
+    "material": "photoresist precursor",
+    "lot_number": "LOT-EXP-2025-004",
+    "manufactured_at": "2025-01-01",
+    "expires_at": "2025-12-31",
+    "certificate": {
+      "certificate_id": "COA-EXP-004",
+      "status": "EXPIRED",
+      "issued_at": "2025-01-01",
+      "expires_at": "2025-12-31"
+    },
+    "quality_status": "PASSED",
+    "export_risk": "LOW"
+  },
+  {
+    "batch_id": "BATCH-REV-005",
+    "supplier_id": "SUP-GAS-002",
+    "material": "etching gas",
+    "lot_number": "LOT-REV-2026-005",
+    "manufactured_at": "2026-06-20",
+    "expires_at": "2027-06-20",
+    "certificate": {
+      "certificate_id": "COA-REV-005",
+      "status": "REVOKED",
+      "issued_at": "2026-06-20",
+      "expires_at": "2027-06-20"
+    },
+    "quality_status": "FAILED",
+    "export_risk": "MEDIUM"
+  },
+  {
+    "batch_id": "BATCH-SUSP-006",
+    "supplier_id": "SUP-SUSPENDED-003",
+    "material": "nanomaterial precursor",
+    "lot_number": "LOT-SUSP-2026-006",
+    "manufactured_at": "2026-07-10",
+    "expires_at": "2027-07-10",
+    "certificate": {
+      "certificate_id": "COA-SUSP-006",
+      "status": "VALID",
+      "issued_at": "2026-07-10",
+      "expires_at": "2027-07-10"
+    },
+    "quality_status": "PASSED",
+    "export_risk": "HIGH"
+  }
+]

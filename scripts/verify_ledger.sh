@@ -9,4 +9,4 @@ if [[ -f "${REPO_ROOT}/venv/bin/activate" ]]; then
     source "${REPO_ROOT}/venv/bin/activate"
 fi
 
-python -m src.supply_chain_ledger
+python -m src.ledger_verifier

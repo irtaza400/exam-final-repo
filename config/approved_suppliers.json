@@ -1,0 +1,32 @@
+[
+  {
+    "supplier_id": "SUP-NANO-001",
+    "name": "NanoChem Supplier A",
+    "status": "ACTIVE",
+    "approved_materials": [
+      "photoresist precursor"
+    ],
+    "country_risk": "LOW",
+    "approval_reference": "QMS-APP-001"
+  },
+  {
+    "supplier_id": "SUP-GAS-002",
+    "name": "Advanced Gas Supplier B",
+    "status": "ACTIVE",
+    "approved_materials": [
+      "etching gas"
+    ],
+    "country_risk": "MEDIUM",
+    "approval_reference": "QMS-APP-002"
+  },
+  {
+    "supplier_id": "SUP-SUSPENDED-003",
+    "name": "Suspended Materials Supplier",
+    "status": "SUSPENDED",
+    "approved_materials": [
+      "nanomaterial precursor"
+    ],
+    "country_risk": "HIGH",
+    "approval_reference": "QMS-SUSP-003"
+  }
+]
