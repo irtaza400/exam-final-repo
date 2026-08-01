@@ -1,0 +1,91 @@
+# Supply-Chain/QMS Existing Implementation Inventory
+
+Generated: Sat Aug  1 07:17:29 UTC 2026
+
+## Matching files
+./data/suppliers.json
+./docs/analysis/supply-chain-current-inventory.txt
+./scripts/run_supply_chain.sh
+./src/__pycache__/supply_chain_ledger.cpython-313.pyc
+./src/supply_chain_ledger.py
+
+## Code references
+src/audit_logger.py:24:        ("supply_chain", "verify_supplier_batch", "BATCH-003", "review_required"),
+src/compliance_report_generator.py:11:    "Supply chain ledger": "reports/supply_chain_ledger.json",
+src/compliance_report_generator.py:59:    report.append("- Supplier certificates, quality status, batch traceability and export-risk flags are recorded.")
+src/edge_gateway.py:108:            "data_quality": "valid",
+src/final_report_generator.py:13:    "Supply chain ledger": "reports/supply_chain_ledger.json",
+src/final_report_generator.py:34:    f.write("- Supply Chain Security: supplier ledger, material traceability, dual-use risk flag\n")
+src/project_orchestrator.py:7:    [sys.executable, "src/supply_chain_ledger.py"],
+src/recipe_integrity_check.py:23:def write_incident(current_hash, approved_hash):
+src/recipe_integrity_check.py:28:            writer.writerow(["timestamp", "severity", "incident", "current_hash", "approved_hash", "recommended_action"])
+src/recipe_integrity_check.py:33:            current_hash,
+src/recipe_integrity_check.py:47:    current_hash = sha256_file(RECIPE)
+src/recipe_integrity_check.py:51:    print("Current hash :", current_hash)
+src/recipe_integrity_check.py:54:    if current_hash != approved_hash:
+src/recipe_integrity_check.py:55:        write_incident(current_hash, approved_hash)
+src/supply_chain_ledger.py:6:SUPPLIERS = "data/suppliers.json"
+src/supply_chain_ledger.py:7:LEDGER = "reports/supply_chain_ledger.json"
+src/supply_chain_ledger.py:18:    if os.path.exists(LEDGER):
+src/supply_chain_ledger.py:19:        with open(LEDGER, "r", encoding="utf-8") as f:
+src/supply_chain_ledger.py:25:    with open(LEDGER, "w", encoding="utf-8") as f:
+src/supply_chain_ledger.py:29:def risk_score(supplier):
+src/supply_chain_ledger.py:31:    if not supplier.get("certificate_valid"):
+src/supply_chain_ledger.py:33:    if not supplier.get("approved"):
+src/supply_chain_ledger.py:35:    if supplier.get("quality_status") != "PASSED":
+src/supply_chain_ledger.py:37:    if supplier.get("export_risk") == "HIGH":
+src/supply_chain_ledger.py:39:    elif supplier.get("export_risk") == "MEDIUM":
+src/supply_chain_ledger.py:53:    with open(SUPPLIERS, "r", encoding="utf-8") as f:
+src/supply_chain_ledger.py:54:        suppliers = json.load(f)
+src/supply_chain_ledger.py:57:    previous_hash = chain[-1]["hash"] if chain else "GENESIS"
+src/supply_chain_ledger.py:59:    csv_lines = ["timestamp,supplier_id,material,batch,risk_score,decision"]
+src/supply_chain_ledger.py:61:    for s in suppliers:
+src/supply_chain_ledger.py:66:            "supplier_id": s["supplier_id"],
+src/supply_chain_ledger.py:67:            "supplier_name": s["name"],
+src/supply_chain_ledger.py:68:            "material": s["material"],
+src/supply_chain_ledger.py:69:            "batch": s["batch"],
+src/supply_chain_ledger.py:70:            "certificate_valid": s["certificate_valid"],
+src/supply_chain_ledger.py:71:            "quality_status": s["quality_status"],
+src/supply_chain_ledger.py:72:            "export_risk": s["export_risk"],
+src/supply_chain_ledger.py:73:            "approved_supplier": s["approved"],
+src/supply_chain_ledger.py:76:            "previous_hash": previous_hash,
+src/supply_chain_ledger.py:79:        previous_hash = block["hash"]
+src/supply_chain_ledger.py:81:        csv_lines.append(f'{block["timestamp"]},{s["supplier_id"]},{s["material"]},{s["batch"]},{score},{action}')
+src/supply_chain_ledger.py:82:        print("SUPPLY CHAIN:", s["supplier_id"], s["material"], "score=", score, "decision=", action)
+src/supply_chain_ledger.py:88:    print("Ledger written to", LEDGER)
+src/tensorflow_anomaly_engine.py:67:model.fit(train_scaled, train_scaled, epochs=15, batch_size=32, verbose=0)
+Binary file src/__pycache__/audit_logger.cpython-313.pyc matches
+Binary file src/__pycache__/compliance_report_generator.cpython-313.pyc matches
+Binary file src/__pycache__/edge_gateway.cpython-313.pyc matches
+Binary file src/__pycache__/final_report_generator.cpython-313.pyc matches
+Binary file src/__pycache__/project_orchestrator.cpython-313.pyc matches
+Binary file src/__pycache__/recipe_integrity_check.cpython-313.pyc matches
+Binary file src/__pycache__/supply_chain_ledger.cpython-313.pyc matches
+Binary file src/__pycache__/tensorflow_anomaly_engine.cpython-313.pyc matches
+data/suppliers.json:3:    "supplier_id": "SUP-NANO-001",
+data/suppliers.json:4:    "name": "NanoChem Supplier A",
+data/suppliers.json:5:    "material": "photoresist precursor",
+data/suppliers.json:6:    "batch": "BATCH-PR-001",
+data/suppliers.json:7:    "certificate_valid": true,
+data/suppliers.json:8:    "quality_status": "PASSED",
+data/suppliers.json:9:    "export_risk": "LOW",
+data/suppliers.json:13:    "supplier_id": "SUP-GAS-002",
+data/suppliers.json:14:    "name": "Advanced Gas Supplier B",
+data/suppliers.json:15:    "material": "etching gas",
+data/suppliers.json:16:    "batch": "BATCH-GAS-002",
+data/suppliers.json:17:    "certificate_valid": true,
+data/suppliers.json:18:    "quality_status": "PASSED",
+data/suppliers.json:19:    "export_risk": "MEDIUM",
+data/suppliers.json:23:    "supplier_id": "SUP-UNKNOWN-999",
+data/suppliers.json:24:    "name": "Unknown Dual Use Supplier X",
+data/suppliers.json:25:    "material": "dual-use nanomaterial precursor",
+data/suppliers.json:26:    "batch": "BATCH-DU-003",
+data/suppliers.json:27:    "certificate_valid": false,
+data/suppliers.json:28:    "quality_status": "REVIEW_REQUIRED",
+data/suppliers.json:29:    "export_risk": "HIGH",
+scripts/install_ec2_dependencies.sh:137:            export PATH
+scripts/install_ec2_dependencies.sh:645:    ca-certificates \
+scripts/run_supply_chain.sh:4:python src/supply_chain_ledger.py
+scripts/verify_phase4.sh:5:  "data/suppliers.json"
+scripts/verify_phase4.sh:7:  "src/supply_chain_ledger.py"
+tests/test_core_files.py:12:        "src/supply_chain_ledger.py",
