@@ -2,6 +2,12 @@ FROM frangoteam/fuxa:1.3.3
 
 USER root
 
+COPY fuxa/patches/patch_opcua_null_timestamps.js \
+     /tmp/patch_opcua_null_timestamps.js
+
+RUN node /tmp/patch_opcua_null_timestamps.js \
+    && rm -f /tmp/patch_opcua_null_timestamps.js
+
 RUN mkdir -p /usr/src/app/FUXA/server/_pkg/runtime \
     && cd /usr/src/app/FUXA/server/_pkg/runtime \
     && printf '%s\n' \
