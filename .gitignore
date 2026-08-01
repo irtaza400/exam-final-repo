@@ -66,3 +66,6 @@ fuxa/logs/*
 !fuxa/logs/.gitkeep
 fuxa/images/*
 !fuxa/images/.gitkeep
+
+# FUXA dynamically installed runtime packages
+fuxa/pkg/
