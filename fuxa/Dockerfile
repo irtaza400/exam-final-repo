@@ -15,6 +15,7 @@ RUN mkdir -p /usr/src/app/FUXA/server/_pkg/runtime \
        '}' \
        > package.json \
     && npm install --omit=dev --no-audit --no-fund \
-    && npm cache clean --force
+    && npm cache clean --force \
+    && test -f /usr/src/app/FUXA/server/main.js
 
-WORKDIR /usr/src/app/FUXA
+WORKDIR /usr/src/app/FUXA/server
