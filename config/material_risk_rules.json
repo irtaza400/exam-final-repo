@@ -3,7 +3,7 @@
     "supplier_not_approved": 30,
     "supplier_not_active": 40,
     "certificate_missing": 40,
-    "certificate_expired": 35,
+    "certificate_expired": 40,
     "certificate_revoked": 50,
     "quality_failed": 30,
     "quality_review_required": 20,

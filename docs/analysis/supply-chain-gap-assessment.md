@@ -27,13 +27,13 @@
 
 ## Missing capabilities
 
-- [ ] Approved-supplier master registry
-- [ ] Active, suspended and revoked supplier states
-- [ ] Certificate identity and expiry validation
-- [ ] Material-batch registration schema
-- [ ] Certificate missing, expired and revoked scenarios
-- [ ] Transparent material-risk rules configuration
-- [ ] Decision reasons and control actions
+- [x] Approved-supplier master registry
+- [x] Active, suspended and revoked supplier states
+- [x] Certificate identity and expiry validation
+- [x] Material-batch registration schema
+- [x] Certificate missing, expired and revoked scenarios
+- [x] Transparent material-risk rules configuration
+- [x] Decision reasons and control actions
 - [ ] Ledger record index and record ID
 - [ ] Full-chain verification
 - [ ] Duplicate-entry prevention
