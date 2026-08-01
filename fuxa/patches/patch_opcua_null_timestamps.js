@@ -7,48 +7,56 @@ const filePath =
 
 const source = fs.readFileSync(filePath, "utf8");
 
-const oldBlock = [
-  "data.tags[id].serverTimestamp = " +
-    "dataValue.serverTimestamp.toString();",
-  "data.tags[id].timestamp = new Date().getTime();",
-].join("\n");
+const unsafeExpression =
+  "dataValue.serverTimestamp.toString()";
 
-const newBlock = [
-  "// Topic 127 compatibility patch:",
-  "// some educational OPC-UA servers omit serverTimestamp.",
-  "const sourceTimestamp =",
-  "    dataValue.serverTimestamp ||",
-  "    dataValue.sourceTimestamp ||",
-  "    new Date();",
-  "data.tags[id].serverTimestamp =",
-  "    sourceTimestamp.toString();",
-  "data.tags[id].timestamp = new Date().getTime();",
-].join("\n");
+const safeExpression =
+  "(dataValue.serverTimestamp || " +
+  "dataValue.sourceTimestamp || " +
+  "new Date()).toString()";
 
-if (!source.includes(oldBlock)) {
+const occurrences =
+  source.split(unsafeExpression).length - 1;
+
+if (occurrences === 0) {
   console.error(
-    "ERROR: Expected FUXA OPC-UA timestamp block was not found."
+    "ERROR: Unsafe serverTimestamp expression was not found."
   );
   process.exit(1);
 }
 
-const patched = source.replace(oldBlock, newBlock);
+const patched = source
+  .split(unsafeExpression)
+  .join(safeExpression);
 
 fs.writeFileSync(filePath, patched, "utf8");
 
 const verification = fs.readFileSync(filePath, "utf8");
 
-if (
-  !verification.includes(
-    "dataValue.serverTimestamp ||"
-  ) ||
-  !verification.includes(
-    "dataValue.sourceTimestamp ||"
-  )
-) {
-  console.error("ERROR: Timestamp patch verification failed.");
+if (verification.includes(unsafeExpression)) {
+  console.error(
+    "ERROR: Unsafe timestamp expression still exists."
+  );
   process.exit(1);
 }
+
+if (
+  !verification.includes(
+    "dataValue.serverTimestamp || " +
+    "dataValue.sourceTimestamp || " +
+    "new Date()"
+  )
+) {
+  console.error(
+    "ERROR: Safe timestamp fallback was not found."
+  );
+  process.exit(1);
+}
+
+console.log(
+  "FUXA OPC-UA timestamp expressions patched:",
+  occurrences
+);
 
 console.log(
   "FUXA OPC-UA null timestamp compatibility patch: PASS"

@@ -9,12 +9,23 @@ if ! docker inspect "${CONTAINER_NAME}" >/dev/null 2>&1; then
     exit 1
 fi
 
-docker exec "${CONTAINER_NAME}" sh -c "
-    grep -F 'dataValue.serverTimestamp ||' '${TARGET_FILE}' \
-      >/dev/null
+if docker exec "${CONTAINER_NAME}" \
+    grep -F \
+    'dataValue.serverTimestamp.toString()' \
+    "${TARGET_FILE}" >/dev/null
+then
+    echo "ERROR: Unsafe serverTimestamp expression remains."
+    exit 1
+fi
 
-    grep -F 'dataValue.sourceTimestamp ||' '${TARGET_FILE}' \
-      >/dev/null
-"
+docker exec "${CONTAINER_NAME}" \
+    grep -F \
+    'dataValue.sourceTimestamp' \
+    "${TARGET_FILE}" >/dev/null
+
+docker exec "${CONTAINER_NAME}" \
+    grep -F \
+    'new Date()).toString()' \
+    "${TARGET_FILE}" >/dev/null
 
 echo "FUXA null timestamp patch validation: PASS"
