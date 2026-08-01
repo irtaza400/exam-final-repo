@@ -37,9 +37,9 @@
 - [x] Ledger record index and record ID
 - [x] Full-chain verification
 - [x] Duplicate-entry prevention
-- [ ] Controlled ledger-tamper simulation
-- [ ] Automated unit tests
-- [ ] Dedicated validation report
+- [x] Controlled ledger-tamper simulation
+- [x] Automated unit tests
+- [x] Dedicated validation report
 - [ ] Direct complete-lab and examiner-runner validation
 - [ ] Evidence-generation workflow
 
