@@ -10,3 +10,5 @@ python-dotenv
 bandit
 semgrep
 tensorflow
+
+pytest>=8.0,<10.0
