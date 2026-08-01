@@ -613,6 +613,18 @@ if [[ "${ORCHESTRATOR_EXIT_CODE}" -ne 0 ]]; then
     exit "${ORCHESTRATOR_EXIT_CODE}"
 fi
 
+echo
+echo "Running Supply-Chain/QMS ledger verification..."
+bash "${REPO_ROOT}/scripts/verify_ledger.sh"
+
+echo
+echo "Running controlled Supply-Chain/QMS ledger tamper demonstration..."
+bash "${REPO_ROOT}/scripts/simulate_ledger_tamper.sh"
+
+echo
+echo "Verifying restored Supply-Chain/QMS ledger..."
+bash "${REPO_ROOT}/scripts/verify_ledger.sh"
+
 # ----------------------------------------------------------------
 # Step 10: Run industrial and recipe validators
 # ----------------------------------------------------------------

@@ -40,8 +40,8 @@
 - [x] Controlled ledger-tamper simulation
 - [x] Automated unit tests
 - [x] Dedicated validation report
-- [ ] Direct complete-lab and examiner-runner validation
-- [ ] Evidence-generation workflow
+- [x] Direct complete-lab and examiner-runner validation
+- [x] Evidence-generation workflow
 
 ## Important classification
 

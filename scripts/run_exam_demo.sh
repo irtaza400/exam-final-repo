@@ -218,6 +218,16 @@ REQUIRED_FILES=(
     "scripts/run_complete_lab.sh"
     "scripts/simulate_recipe_tamper.sh"
     "src/project_orchestrator.py"
+    "config/approved_suppliers.json"
+    "config/material_risk_rules.json"
+    "data/material_batches.json"
+    "src/supplier_validator.py"
+    "src/material_risk_engine.py"
+    "src/supply_chain_ledger.py"
+    "src/ledger_verifier.py"
+    "scripts/run_supply_chain.sh"
+    "scripts/verify_ledger.sh"
+    "scripts/simulate_ledger_tamper.sh"
     "src/edge_gateway.py"
     "src/edge_ai_engine.py"
     "config/edge_ai.json"
@@ -298,6 +308,16 @@ docker compose up -d
 docker compose ps
 
 success "Docker Compose services started."
+
+# Remove generated Supply-Chain/QMS evidence so every examiner run
+# starts from a deterministic clean ledger state.
+rm -f \
+    "${REPORTS_DIR}/supply_chain_ledger.json" \
+    "${REPORTS_DIR}/supply_chain_risk_report.csv" \
+    "${REPORTS_DIR}/supply_chain_validation_report.json" \
+    "${REPORTS_DIR}/ledger_verification_report.json" \
+    "${REPORTS_DIR}/ledger_tamper_verification_report.json" \
+    "${REPORTS_DIR}/supply_chain_ledger.tampered.json"
 
 # ----------------------------------------------------------------
 # Step 4: Run complete lab, keeping live monitoring active
@@ -466,6 +486,10 @@ SENSOR_SIM_PID="$(tr -d '[:space:]' < "${RUNTIME_DIR}/sensor_simulator.pid")"
     echo "  - Project orchestrator and scikit-learn workflow"
     echo "  - TensorFlow/Keras anomaly workflow"
     echo "  - Recipe integrity and tamper simulation"
+    echo "  - Approved-supplier and material-batch validation"
+    echo "  - Quality certificate and export-risk classification"
+    echo "  - Tamper-evident supply-chain ledger verification"
+    echo "  - Controlled ledger-tamper detection and restoration"
     echo "  - Compliance evidence generation"
     echo "  - Final report generation"
     echo
@@ -506,6 +530,12 @@ echo "  tail -f logs/sensor_simulator.log"
 echo
 echo "Reports:"
 echo "  ls -lah reports/"
+echo
+echo "Supply-Chain/QMS evidence:"
+echo "  python -m src.ledger_verifier"
+echo "  cat reports/supply_chain_validation_report.json"
+echo "  cat reports/ledger_verification_report.json"
+echo "  cat reports/ledger_tamper_verification_report.json"
 echo
 echo "Exam summary:"
 echo "  cat ${SUMMARY_FILE}"
