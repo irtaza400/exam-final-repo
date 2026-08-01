@@ -34,9 +34,9 @@
 - [x] Certificate missing, expired and revoked scenarios
 - [x] Transparent material-risk rules configuration
 - [x] Decision reasons and control actions
-- [ ] Ledger record index and record ID
-- [ ] Full-chain verification
-- [ ] Duplicate-entry prevention
+- [x] Ledger record index and record ID
+- [x] Full-chain verification
+- [x] Duplicate-entry prevention
 - [ ] Controlled ledger-tamper simulation
 - [ ] Automated unit tests
 - [ ] Dedicated validation report

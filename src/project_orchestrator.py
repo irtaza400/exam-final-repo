@@ -4,7 +4,7 @@ import sys
 commands = [
     [sys.executable, "src/ml_anomaly_engine.py"],
     [sys.executable, "src/recipe_integrity_check.py"],
-    [sys.executable, "src/supply_chain_ledger.py"],
+    [sys.executable, "-m", "src.supply_chain_ledger"],
     [sys.executable, "src/ehs_incident_engine.py"],
     [sys.executable, "src/compliance_report_generator.py"],
     [sys.executable, "src/audit_logger.py"],
