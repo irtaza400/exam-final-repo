@@ -1,0 +1,62 @@
+{
+  "device_id": "topic127-opcua-01",
+  "device_name": "Topic127 OPC-UA Process",
+  "view": {
+    "id": "v_topic127_operations_overview",
+    "name": "Operations Overview",
+    "width": 1280,
+    "height": 720
+  },
+  "tags": {
+    "recipe_id": {
+      "name": "RecipeID",
+      "node_id": "ns=2;i=2",
+      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=2",
+      "unit": ""
+    },
+    "process_name": {
+      "name": "ProcessName",
+      "node_id": "ns=2;i=3",
+      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=3",
+      "unit": ""
+    },
+    "temperature": {
+      "name": "TemperatureSetpoint",
+      "node_id": "ns=2;i=4",
+      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=4",
+      "unit": " °C",
+      "normal_min": 20,
+      "normal_max": 25
+    },
+    "pressure": {
+      "name": "PressureSetpoint",
+      "node_id": "ns=2;i=5",
+      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=5",
+      "unit": " bar",
+      "normal_min": 0.9,
+      "normal_max": 1.1
+    },
+    "etch_time": {
+      "name": "EtchTimeSeconds",
+      "node_id": "ns=2;i=6",
+      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=6",
+      "unit": " sec",
+      "normal_min": 55,
+      "normal_max": 65
+    },
+    "machine_status": {
+      "name": "MachineStatus",
+      "node_id": "ns=2;i=7",
+      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=7",
+      "normal_value": "RUNNING",
+      "warning_value": "MAINTENANCE"
+    },
+    "security_state": {
+      "name": "SecurityState",
+      "node_id": "ns=2;i=8",
+      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=8",
+      "normal_value": "NORMAL",
+      "critical_value": "CHECK_REQUIRED"
+    }
+  }
+}
