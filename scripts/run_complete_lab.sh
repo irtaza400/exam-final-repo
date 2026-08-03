@@ -626,6 +626,31 @@ echo
 echo "Verifying restored Supply-Chain/QMS ledger..."
 bash "${REPO_ROOT}/scripts/verify_ledger.sh"
 
+echo
+echo "Generating simulated blockchain ledger evidence..."
+
+SIMULATED_LEDGER_EVIDENCE_SCRIPT="${REPO_ROOT}/scripts/run_simulated_ledger_evidence.sh"
+
+if [[ ! -f "${SIMULATED_LEDGER_EVIDENCE_SCRIPT}" ]]; then
+    echo "ERROR: Simulated ledger evidence script was not found:"
+    echo "  ${SIMULATED_LEDGER_EVIDENCE_SCRIPT}"
+    exit 1
+fi
+
+set +e
+bash "${SIMULATED_LEDGER_EVIDENCE_SCRIPT}" 2>&1 |
+    tee "${LOGS_DIR}/simulated_ledger_evidence.log"
+SIMULATED_LEDGER_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+if [[ "${SIMULATED_LEDGER_EXIT_CODE}" -ne 0 ]]; then
+    echo "ERROR: Simulated ledger evidence workflow failed."
+    echo "Exit code: ${SIMULATED_LEDGER_EXIT_CODE}"
+    exit "${SIMULATED_LEDGER_EXIT_CODE}"
+fi
+
+echo "Simulated blockchain ledger evidence generation: PASS"
+
 # ----------------------------------------------------------------
 # Step 10: Run industrial and recipe validators
 # ----------------------------------------------------------------
