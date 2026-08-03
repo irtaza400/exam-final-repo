@@ -67,6 +67,7 @@ MODBUS_PORT="${MODBUS_PORT:-5020}"
 SERVER_START_TIMEOUT="${SERVER_START_TIMEOUT:-30}"
 DATA_START_TIMEOUT="${DATA_START_TIMEOUT:-45}"
 STOP_MONITORING_AFTER_LAB="${STOP_MONITORING_AFTER_LAB:-0}"
+SKIP_SURICATA_DEMO="${SKIP_SURICATA_DEMO:-0}"
 
 MQTT_WRITER_PID_FILE="${RUNTIME_DIR}/mqtt_to_influx.pid"
 EDGE_GATEWAY_PID_FILE="${RUNTIME_DIR}/edge_gateway.pid"
@@ -406,7 +407,7 @@ echo "Modbus endpoint   : ${MODBUS_HOST}:${MODBUS_PORT}"
 # ----------------------------------------------------------------
 # Step 1: Activate virtual environment
 # ----------------------------------------------------------------
-section "[1/14] Activating Python virtual environment"
+section "[1/15] Activating Python virtual environment"
 
 if [[ ! -f "${VENV_DIR}/bin/activate" ]]; then
     echo "ERROR: Python virtual environment was not found: ${VENV_DIR}"
@@ -423,7 +424,7 @@ python --version
 # ----------------------------------------------------------------
 # Step 2: Start Docker Compose infrastructure
 # ----------------------------------------------------------------
-section "[2/14] Starting Docker Compose infrastructure"
+section "[2/15] Starting Docker Compose infrastructure"
 
 if ! docker_command_available; then
     echo "ERROR: Docker command is unavailable."
@@ -458,7 +459,7 @@ wait_for_port "Grafana" "${GRAFANA_HOST}" "${GRAFANA_PORT}" "${SERVER_START_TIME
 # ----------------------------------------------------------------
 # Step 3: Start Edge Gateway
 # ----------------------------------------------------------------
-section "[3/14] Starting Edge Gateway"
+section "[3/15] Starting Edge Gateway"
 
 start_persistent_python_service \
     "Edge Gateway" \
@@ -475,7 +476,7 @@ EDGE_GATEWAY_STARTED_BY_SCRIPT=true
 # ----------------------------------------------------------------
 # Step 4: Start Edge AI engine
 # ----------------------------------------------------------------
-section "[4/14] Starting Edge AI inference service"
+section "[4/15] Starting Edge AI inference service"
 
 start_persistent_python_service \
     "Edge AI engine" \
@@ -494,7 +495,7 @@ EDGE_AI_STARTED_BY_SCRIPT=true
 # ----------------------------------------------------------------
 # Step 5: Start MQTT-to-Influx writer
 # ----------------------------------------------------------------
-section "[5/14] Starting MQTT-to-Influx ingestion"
+section "[5/15] Starting MQTT-to-Influx ingestion"
 
 start_persistent_python_service \
     "MQTT-to-Influx writer" \
@@ -514,7 +515,7 @@ MQTT_WRITER_STARTED_BY_SCRIPT=true
 # ----------------------------------------------------------------
 # Step 6: Start sensor simulator
 # ----------------------------------------------------------------
-section "[6/14] Starting cleanroom sensor simulator"
+section "[6/15] Starting cleanroom sensor simulator"
 
 start_persistent_python_service \
     "Cleanroom sensor simulator" \
@@ -530,7 +531,7 @@ SENSOR_SIM_STARTED_BY_SCRIPT=true
 # ----------------------------------------------------------------
 # Step 7: Verify monitoring pipeline
 # ----------------------------------------------------------------
-section "[7/14] Verifying Edge Gateway, Edge AI and MQTT-to-Influx pipeline"
+section "[7/15] Verifying Edge Gateway, Edge AI and MQTT-to-Influx pipeline"
 
 if ! wait_for_influx_data; then
     echo "ERROR: No cleanroom data appeared in InfluxDB within ${DATA_START_TIMEOUT} seconds."
@@ -548,7 +549,7 @@ success "Live cleanroom monitoring pipeline is working."
 # ----------------------------------------------------------------
 # Step 7: Start OPC-UA server
 # ----------------------------------------------------------------
-section "[8/14] Starting OPC-UA server"
+section "[8/15] Starting OPC-UA server"
 
 if port_is_open "${OPCUA_HOST}" "${OPCUA_PORT}"; then
     echo "OPC-UA server is already reachable at ${OPCUA_HOST}:${OPCUA_PORT}."
@@ -571,7 +572,7 @@ fi
 # ----------------------------------------------------------------
 # Step 8: Start Modbus server
 # ----------------------------------------------------------------
-section "[9/14] Starting Modbus server"
+section "[9/15] Starting Modbus server"
 
 if port_is_open "${MODBUS_HOST}" "${MODBUS_PORT}"; then
     echo "Modbus server is already reachable at ${MODBUS_HOST}:${MODBUS_PORT}."
@@ -594,7 +595,7 @@ fi
 # ----------------------------------------------------------------
 # Step 9: Run project orchestrator
 # ----------------------------------------------------------------
-section "[10/14] Running main project orchestrator"
+section "[10/15] Running main project orchestrator"
 
 ORCHESTRATOR_SCRIPT="${REPO_ROOT}/src/project_orchestrator.py"
 
@@ -628,7 +629,7 @@ bash "${REPO_ROOT}/scripts/verify_ledger.sh"
 # ----------------------------------------------------------------
 # Step 10: Run industrial and recipe validators
 # ----------------------------------------------------------------
-section "[11/14] Running industrial protocol and recipe validators"
+section "[11/15] Running industrial protocol and recipe validators"
 
 run_optional_python_component \
     "OPC-UA client validator" \
@@ -646,9 +647,44 @@ run_optional_python_component \
     "${LOGS_DIR}/recipe_integrity_check.log"
 
 # ----------------------------------------------------------------
-# Step 11: Run TensorFlow/Keras engine
+# Step 11: Run Suricata IDS demonstration
 # ----------------------------------------------------------------
-section "[12/14] Running TensorFlow/Keras anomaly engine"
+section "[12/15] Running Suricata industrial IDS demonstration"
+
+SURICATA_DEMO_SCRIPT="${REPO_ROOT}/scripts/run_suricata_ids_demo.sh"
+SURICATA_VALIDATOR="${REPO_ROOT}/scripts/validate_suricata_alerts.py"
+
+if [[ "${SKIP_SURICATA_DEMO}" == "1" ]]; then
+    warning "Suricata IDS demonstration skipped by configuration."
+elif [[ ! -f "${SURICATA_DEMO_SCRIPT}" ]]; then
+    warning "Suricata demo script was not found: ${SURICATA_DEMO_SCRIPT}"
+else
+    set +e
+    bash "${SURICATA_DEMO_SCRIPT}" 2>&1 |
+        tee "${LOGS_DIR}/suricata_ids_demo.log"
+    SURICATA_EXIT_CODE=${PIPESTATUS[0]}
+    set -e
+
+    if [[ "${SURICATA_EXIT_CODE}" -ne 0 ]]; then
+        echo "ERROR: Suricata IDS demonstration failed with exit code ${SURICATA_EXIT_CODE}."
+        exit "${SURICATA_EXIT_CODE}"
+    fi
+
+    if [[ ! -f "${SURICATA_VALIDATOR}" ]]; then
+        echo "ERROR: Suricata alert validator was not found: ${SURICATA_VALIDATOR}"
+        exit 1
+    fi
+
+    python "${SURICATA_VALIDATOR}" 2>&1 |
+        tee "${LOGS_DIR}/suricata_alert_validation.log"
+
+    echo "Suricata industrial IDS demonstration completed successfully."
+fi
+
+# ----------------------------------------------------------------
+# Step 12: Run TensorFlow/Keras engine
+# ----------------------------------------------------------------
+section "[13/15] Running TensorFlow/Keras anomaly engine"
 
 TENSORFLOW_SCRIPT="${REPO_ROOT}/scripts/run_tensorflow_ml.sh"
 
@@ -668,9 +704,9 @@ else
 fi
 
 # ----------------------------------------------------------------
-# Step 12: Refresh final evidence and reports
+# Step 13: Refresh final evidence and reports
 # ----------------------------------------------------------------
-section "[13/14] Refreshing final compliance and project evidence"
+section "[14/15] Refreshing final compliance and project evidence"
 
 run_optional_python_component \
     "Final compliance report refresh" \
@@ -703,9 +739,9 @@ run_optional_python_component \
     "${LOGS_DIR}/final_project_report.log"
 
 # ----------------------------------------------------------------
-# Step 14: Final summary
+# Step 15: Final summary
 # ----------------------------------------------------------------
-section "[14/14] Complete Lab Execution Finished"
+section "[15/15] Complete Lab Execution Finished"
 
 MQTT_WRITER_PID="$(read_pid_file "${MQTT_WRITER_PID_FILE}")"
 EDGE_GATEWAY_PID="$(read_pid_file "${EDGE_GATEWAY_PID_FILE}")"
