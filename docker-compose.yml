@@ -139,6 +139,31 @@ services:
     networks:
       - topic127-network
 
+
+  suricata:
+    image: jasonish/suricata:latest
+    container_name: topic127-suricata
+    profiles:
+      - security-demo
+
+    command:
+      - -r
+      - /pcaps/topic127_industrial_ids_test.pcap
+      - -S
+      - /rules/topic127.rules
+      - -l
+      - /var/log/suricata
+      - -k
+      - none
+
+    volumes:
+      - ./suricata/rules:/rules:ro
+      - ./suricata/pcaps:/pcaps:ro
+      - ./suricata/logs:/var/log/suricata
+
+    networks:
+      - topic127-network
+
 volumes:
   mosquitto-data:
   mosquitto-log:

@@ -1,0 +1,5 @@
+# Nanomanufacturing Industrial Security Detection Rules
+
+alert tcp any any -> any 4840 (msg:"NANOMANUFACTURING IDS Unauthorized OPC-UA Access Attempt"; content:"TOPIC127-UNAUTHORIZED-OPCUA"; sid:1270001; rev:1;)
+alert tcp any any -> any 1883 (msg:"NANOMANUFACTURING IDS Suspicious MQTT Command Payload"; content:"TOPIC127-MQTT-TAMPER"; sid:1270002; rev:1;)
+alert tcp any any -> any 1881 (msg:"NANOMANUFACTURING IDS Suspicious HMI Access Attempt"; content:"TOPIC127-HMI-SCAN"; sid:1270003; rev:1;)

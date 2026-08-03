@@ -69,3 +69,13 @@ fuxa/images/*
 
 # FUXA dynamically installed runtime packages
 fuxa/pkg/
+
+################################################
+# Suricata generated evidence
+################################################
+
+suricata/logs/*
+!suricata/logs/.gitkeep
+
+suricata/pcaps/*
+!suricata/pcaps/.gitkeep
