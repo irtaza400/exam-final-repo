@@ -24,4 +24,14 @@ RUN mkdir -p /usr/src/app/FUXA/server/_pkg/runtime \
     && npm cache clean --force \
     && test -f /usr/src/app/FUXA/server/main.js
 
+COPY fuxa/bridge/topic127_live_render_bridge.js \
+     /usr/src/app/FUXA/client/dist/assets/topic127_live_render_bridge.js
+
+RUN grep -q '</body>' /usr/src/app/FUXA/client/dist/index.html \
+    && sed -i \
+       's#</body>#<script src="/assets/topic127_live_render_bridge.js"></script></body>#' \
+       /usr/src/app/FUXA/client/dist/index.html \
+    && grep -q 'topic127_live_render_bridge.js' \
+       /usr/src/app/FUXA/client/dist/index.html
+
 WORKDIR /usr/src/app/FUXA/server
