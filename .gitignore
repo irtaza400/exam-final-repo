@@ -57,3 +57,15 @@ Thumbs.db
 
 .runtime/
 data/backups/
+# FUXA generated runtime and project data
+fuxa/appdata/*
+!fuxa/appdata/.gitkeep
+fuxa/db/*
+!fuxa/db/.gitkeep
+fuxa/logs/*
+!fuxa/logs/.gitkeep
+fuxa/images/*
+!fuxa/images/.gitkeep
+
+# FUXA dynamically installed runtime packages
+fuxa/pkg/
