@@ -704,6 +704,72 @@ if [[ "${FUXA_LEDGER_VALIDATION_EXIT_CODE}" -ne 0 ]]; then
 fi
 
 echo "FUXA simulated-ledger health workflow: PASS"
+echo
+echo "Generating and validating Grafana simulated-ledger dashboard..."
+
+GRAFANA_LEDGER_GENERATOR="${REPO_ROOT}/scripts/generate_grafana_ledger_health_dashboard.py"
+GRAFANA_LEDGER_VALIDATOR="${REPO_ROOT}/scripts/validate_grafana_ledger_health_dashboard.py"
+LEDGER_METRICS_PUBLISHER="${REPO_ROOT}/src/publish_ledger_metrics.py"
+LEDGER_METRICS_VALIDATOR="${REPO_ROOT}/scripts/validate_ledger_metrics.py"
+
+for required_file in \
+    "${GRAFANA_LEDGER_GENERATOR}" \
+    "${GRAFANA_LEDGER_VALIDATOR}" \
+    "${LEDGER_METRICS_PUBLISHER}" \
+    "${LEDGER_METRICS_VALIDATOR}"; do
+
+    if [[ ! -f "${required_file}" ]]; then
+        echo "ERROR: Required Grafana ledger workflow file not found:"
+        echo "  ${required_file}"
+        exit 1
+    fi
+done
+
+set +e
+python "${GRAFANA_LEDGER_GENERATOR}" 2>&1 \
+    | tee "${LOGS_DIR}/grafana_ledger_dashboard_generation.log"
+GRAFANA_GENERATOR_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+if [[ "${GRAFANA_GENERATOR_EXIT_CODE}" -ne 0 ]]; then
+    echo "ERROR: Grafana ledger dashboard generation failed."
+    exit "${GRAFANA_GENERATOR_EXIT_CODE}"
+fi
+
+set +e
+python "${GRAFANA_LEDGER_VALIDATOR}" 2>&1 \
+    | tee "${LOGS_DIR}/grafana_ledger_dashboard_validation.log"
+GRAFANA_VALIDATOR_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+if [[ "${GRAFANA_VALIDATOR_EXIT_CODE}" -ne 0 ]]; then
+    echo "ERROR: Grafana ledger dashboard validation failed."
+    exit "${GRAFANA_VALIDATOR_EXIT_CODE}"
+fi
+
+set +e
+python -m src.publish_ledger_metrics 2>&1 \
+    | tee "${LOGS_DIR}/ledger_metrics_publish.log"
+LEDGER_METRICS_PUBLISH_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+if [[ "${LEDGER_METRICS_PUBLISH_EXIT_CODE}" -ne 0 ]]; then
+    echo "ERROR: Ledger metrics publication failed."
+    exit "${LEDGER_METRICS_PUBLISH_EXIT_CODE}"
+fi
+
+set +e
+python "${LEDGER_METRICS_VALIDATOR}" 2>&1 \
+    | tee "${LOGS_DIR}/ledger_metrics_validation.log"
+LEDGER_METRICS_VALIDATION_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+if [[ "${LEDGER_METRICS_VALIDATION_EXIT_CODE}" -ne 0 ]]; then
+    echo "ERROR: Ledger metrics validation failed."
+    exit "${LEDGER_METRICS_VALIDATION_EXIT_CODE}"
+fi
+
+echo "Grafana simulated-ledger health workflow: PASS"
 
 # The generator renders the current runtime hash into the source JSON.
 # Restore the committed baseline so the repository remains clean.
