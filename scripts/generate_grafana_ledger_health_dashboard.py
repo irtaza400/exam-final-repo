@@ -43,6 +43,8 @@ def stat_panel(
     decimals: int = 0,
     thresholds: list[dict[str, Any]] | None = None,
     value_mappings: list[dict[str, Any]] | None = None,
+    text_mode: str = "auto",
+    color_mode: str = "background",
 ) -> dict[str, Any]:
     """Build a Grafana stat panel."""
 
@@ -77,7 +79,7 @@ def stat_panel(
         },
         "id": panel_id,
         "options": {
-            "colorMode": "background",
+            "colorMode": color_mode,
             "graphMode": "none",
             "justifyMode": "center",
             "orientation": "auto",
@@ -88,7 +90,7 @@ def stat_panel(
                 "fields": "",
                 "values": False,
             },
-            "textMode": "auto",
+            "textMode": text_mode,
             "wideLayout": True,
         },
         "targets": [
@@ -249,7 +251,10 @@ def build_dashboard() -> dict[str, Any]:
             field="latest_hash_short",
             x=18,
             y=7,
+            unit="string",
             decimals=0,
+            text_mode="value",
+            color_mode="none",
         ),
     ]
 

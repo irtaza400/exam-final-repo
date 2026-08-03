@@ -413,7 +413,7 @@
       "fieldConfig": {
         "defaults": {
           "decimals": 0,
-          "unit": "short"
+          "unit": "string"
         },
         "overrides": []
       },
@@ -425,7 +425,7 @@
       },
       "id": 8,
       "options": {
-        "colorMode": "background",
+        "colorMode": "none",
         "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
@@ -436,7 +436,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto",
+        "textMode": "value",
         "wideLayout": true
       },
       "targets": [

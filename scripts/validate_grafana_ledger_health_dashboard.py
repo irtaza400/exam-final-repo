@@ -142,6 +142,34 @@ def main() -> int:
                 f"Panel '{title}' does not use last()."
             )
 
+        if title == "Latest Hash":
+            defaults = panel.get(
+                "fieldConfig",
+                {},
+            ).get(
+                "defaults",
+                {},
+            )
+            options = panel.get(
+                "options",
+                {},
+            )
+
+            if defaults.get("unit") != "string":
+                errors.append(
+                    "Latest Hash panel must use string unit."
+                )
+
+            if options.get("textMode") != "value":
+                errors.append(
+                    "Latest Hash panel must use value text mode."
+                )
+
+            if options.get("colorMode") != "none":
+                errors.append(
+                    "Latest Hash panel must disable background coloring."
+                )
+
     missing_titles = (
         set(EXPECTED_PANELS)
         - found_titles
