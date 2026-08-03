@@ -102,9 +102,16 @@ def main() -> int:
 
         found_titles.add(title)
 
-        if panel_type != "stat":
+        expected_type = (
+            "table"
+            if title == "Latest Hash"
+            else "stat"
+        )
+
+        if panel_type != expected_type:
             errors.append(
-                f"Panel '{title}' must use stat type."
+                f"Panel '{title}' must use "
+                f"{expected_type} type."
             )
 
         if datasource_uid != EXPECTED_DATASOURCE_UID:
@@ -142,33 +149,6 @@ def main() -> int:
                 f"Panel '{title}' does not use last()."
             )
 
-        if title == "Latest Hash":
-            defaults = panel.get(
-                "fieldConfig",
-                {},
-            ).get(
-                "defaults",
-                {},
-            )
-            options = panel.get(
-                "options",
-                {},
-            )
-
-            if defaults.get("unit") != "string":
-                errors.append(
-                    "Latest Hash panel must use string unit."
-                )
-
-            if options.get("textMode") != "value":
-                errors.append(
-                    "Latest Hash panel must use value text mode."
-                )
-
-            if options.get("colorMode") != "none":
-                errors.append(
-                    "Latest Hash panel must disable background coloring."
-                )
 
     missing_titles = (
         set(EXPECTED_PANELS)

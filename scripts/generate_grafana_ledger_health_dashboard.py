@@ -104,6 +104,65 @@ def stat_panel(
     }
 
 
+def hash_table_panel(
+    *,
+    panel_id: int,
+    x: int,
+    y: int,
+    width: int = 6,
+    height: int = 7,
+) -> dict[str, Any]:
+    """Build a table panel for the latest ledger hash."""
+
+    query = (
+        f'from(bucket: "{BUCKET}")\n'
+        "  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n"
+        f'  |> filter(fn: (r) => r._measurement == "{MEASUREMENT}")\n'
+        '  |> filter(fn: (r) => r._field == "latest_hash_short")\n'
+        "  |> last()\n"
+        '  |> keep(columns: ["_time", "_value"])\n'
+        '  |> rename(columns: {_time: "Timestamp", _value: "Latest Hash"})\n'
+    )
+
+    return {
+        "datasource": {
+            "type": "influxdb",
+            "uid": DATASOURCE_UID,
+        },
+        "fieldConfig": {
+            "defaults": {},
+            "overrides": [],
+        },
+        "gridPos": {
+            "h": height,
+            "w": width,
+            "x": x,
+            "y": y,
+        },
+        "id": panel_id,
+        "options": {
+            "cellHeight": "lg",
+            "footer": {
+                "countRows": False,
+                "fields": "",
+                "reducer": [
+                    "sum",
+                ],
+                "show": False,
+            },
+            "showHeader": True,
+        },
+        "targets": [
+            {
+                "query": query,
+                "refId": "A",
+            }
+        ],
+        "title": "Latest Hash",
+        "type": "table",
+    }
+
+
 def build_dashboard() -> dict[str, Any]:
     """Build the complete Ledger Health dashboard."""
 
@@ -245,16 +304,10 @@ def build_dashboard() -> dict[str, Any]:
             x=12,
             y=7,
         ),
-        stat_panel(
+        hash_table_panel(
             panel_id=8,
-            title="Latest Hash",
-            field="latest_hash_short",
             x=18,
             y=7,
-            unit="string",
-            decimals=0,
-            text_mode="value",
-            color_mode="none",
         ),
     ]
 

@@ -411,10 +411,7 @@
         "uid": "influxdb-topic127"
       },
       "fieldConfig": {
-        "defaults": {
-          "decimals": 0,
-          "unit": "string"
-        },
+        "defaults": {},
         "overrides": []
       },
       "gridPos": {
@@ -425,28 +422,25 @@
       },
       "id": 8,
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+        "cellHeight": "lg",
+        "footer": {
+          "countRows": false,
           "fields": "",
-          "values": false
+          "reducer": [
+            "sum"
+          ],
+          "show": false
         },
-        "textMode": "value",
-        "wideLayout": true
+        "showHeader": true
       },
       "targets": [
         {
-          "query": "from(bucket: \"cleanroom\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"ledger_health\")\n  |> filter(fn: (r) => r._field == \"latest_hash_short\")\n  |> last()\n",
+          "query": "from(bucket: \"cleanroom\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"ledger_health\")\n  |> filter(fn: (r) => r._field == \"latest_hash_short\")\n  |> last()\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> rename(columns: {_time: \"Timestamp\", _value: \"Latest Hash\"})\n",
           "refId": "A"
         }
       ],
       "title": "Latest Hash",
-      "type": "stat"
+      "type": "table"
     }
   ],
   "refresh": "10s",
