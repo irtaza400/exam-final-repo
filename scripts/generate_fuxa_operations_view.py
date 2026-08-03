@@ -235,7 +235,7 @@ def build_view(config: dict[str, Any]) -> dict[str, Any]:
             element_id="TITLE",
             x=55,
             y=48,
-            text="Topic 127 Nanomanufacturing Operations HMI",
+            text="Nanomanufacturing Operations HMI",
             size=30,
             weight=700,
             fill="#FFFFFF",
