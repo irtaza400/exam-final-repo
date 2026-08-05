@@ -234,6 +234,11 @@ REQUIRED_FILES=(
     "scripts/import_fuxa_ledger_health_view.py"
     "scripts/validate_fuxa_ledger_health_view.py"
     "fuxa/project/topic127_ledger_health.json"
+    "scripts/generate_grafana_ledger_health_dashboard.py"
+    "scripts/validate_grafana_ledger_health_dashboard.py"
+    "src/publish_ledger_metrics.py"
+    "scripts/validate_ledger_metrics.py"
+    "dashboards/json/topic127_ledger_health_dashboard.json"
     "src/edge_gateway.py"
     "src/edge_ai_engine.py"
     "config/edge_ai.json"
@@ -336,7 +341,9 @@ section "[4/9] Running complete laboratory workflow"
 
 if ! run_logged_command \
     "Complete lab workflow" \
-    env STOP_MONITORING_AFTER_LAB=0 \
+    env \
+    STOP_MONITORING_AFTER_LAB=0 \
+    KEEP_PROTOCOL_SERVERS_RUNNING=1 \
     bash "${REPO_ROOT}/scripts/run_complete_lab.sh"; then
 
     echo "ERROR: The complete lab workflow failed. Review: ${MASTER_LOG}"
@@ -504,6 +511,10 @@ SENSOR_SIM_PID="$(tr -d '[:space:]' < "${RUNTIME_DIR}/sensor_simulator.pid")"
     echo "  - SHA-256 chain-health and first-failing-record reporting"
     echo "  - FUXA simulated-ledger health dashboard generation and validation"
     echo "  - Multi-view FUXA evidence with Operations and Ledger Health screens"
+    echo "  - Grafana simulated-ledger dashboard generation"
+    echo "  - Grafana ledger-health dashboard validation"
+    echo "  - Ledger metrics publication to InfluxDB"
+    echo "  - Ledger metrics validation"
     echo "  - Real Suricata IDS inspection of controlled industrial traffic"
     echo "  - OPC-UA, MQTT and HMI security-alert validation"
     echo "  - Compliance evidence generation"
@@ -566,6 +577,11 @@ echo "  cat logs/fuxa_ledger_health_generation.log"
 echo "  cat logs/fuxa_ledger_health_import.log"
 echo "  cat logs/fuxa_ledger_health_validation.log"
 echo
+echo "Industrial protocol servers remain running:"
+echo "  OPC-UA : ${OPCUA_HOST}:${OPCUA_PORT}"
+echo "  Modbus : ${MODBUS_HOST}:${MODBUS_PORT}"
+echo
+echo "FUXA will continue receiving live data."
 echo "Suricata IDS evidence:"
 echo "  cat suricata/logs/fast.log"
 echo "  python -m json.tool reports/suricata_ids_validation.json"

@@ -164,6 +164,10 @@ cleanup() {
     echo
     echo "Cleaning up locally started protocol services..."
 
+    KEEP_PROTOCOL_SERVERS_RUNNING="${KEEP_PROTOCOL_SERVERS_RUNNING:-1}"
+
+if [[ "${KEEP_PROTOCOL_SERVERS_RUNNING}" != "1" ]]; then
+
     if pid_is_running "${OPCUA_PID}"; then
         echo "Stopping OPC-UA server process: ${OPCUA_PID}"
         kill "${OPCUA_PID}" 2>/dev/null || true
@@ -175,6 +179,10 @@ cleanup() {
         kill "${MODBUS_PID}" 2>/dev/null || true
         wait "${MODBUS_PID}" 2>/dev/null || true
     fi
+
+else
+    echo "Keeping OPC-UA and Modbus servers running for live demonstration."
+fi
 
     if [[ "${STOP_MONITORING_AFTER_LAB}" == "1" ]]; then
         echo "Stopping monitoring services by configuration..."
@@ -771,8 +779,7 @@ fi
 
 echo "Grafana simulated-ledger health workflow: PASS"
 
-# The generator renders the current runtime hash into the source JSON.
-# Restore the committed baseline so the repository remains clean.
+# The generator renders the current runtime hash into the source JSON. Restore the committed baseline so the repository remains clean.
 git restore -- \
     fuxa/project/topic127_ledger_health.json \
     2>/dev/null || true
@@ -923,6 +930,15 @@ echo "  tail -f logs/edge_ai.log"
 echo "  tail -f logs/mqtt_to_influx.log"
 echo "  tail -f logs/sensor_simulator.log"
 echo "  docker exec topic127-influxdb influx query 'from(bucket: \"cleanroom\") |> range(start: -5m) |> last()' --org topic127 --token topic127-token"
+echo
+echo "Industrial protocol services:"
+echo "  OPC-UA Server : RUNNING"
+echo "  Modbus Server : RUNNING"
+echo
+echo "These services remain active for:"
+echo "  - FUXA"
+echo "  - Grafana"
+echo "  - Live examiner demonstration"
 echo
 echo "To stop monitoring services later:"
 echo "  kill \$(cat .runtime/edge_gateway.pid) 2>/dev/null || true"
