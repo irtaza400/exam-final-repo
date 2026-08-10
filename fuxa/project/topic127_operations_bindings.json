@@ -10,51 +10,51 @@
   "tags": {
     "recipe_id": {
       "name": "RecipeID",
-      "node_id": "ns=2;i=2",
-      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=2",
+      "node_id": "t_ae97f8b5-21374127",
+      "variable_id": "Topic127 OPC-UA Process^~^t_ae97f8b5-21374127",
       "unit": ""
     },
     "process_name": {
       "name": "ProcessName",
-      "node_id": "ns=2;i=3",
-      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=3",
+      "node_id": "t_b3e17761-82294d16",
+      "variable_id": "Topic127 OPC-UA Process^~^t_b3e17761-82294d16",
       "unit": ""
     },
     "temperature": {
       "name": "TemperatureSetpoint",
-      "node_id": "ns=2;i=4",
-      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=4",
+      "node_id": "t_d8cf674e-e6fb43c2",
+      "variable_id": "Topic127 OPC-UA Process^~^t_d8cf674e-e6fb43c2",
       "unit": " °C",
       "normal_min": 20,
       "normal_max": 25
     },
     "pressure": {
       "name": "PressureSetpoint",
-      "node_id": "ns=2;i=5",
-      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=5",
+      "node_id": "t_2e211a43-320c496d",
+      "variable_id": "Topic127 OPC-UA Process^~^t_2e211a43-320c496d",
       "unit": " bar",
       "normal_min": 0.9,
       "normal_max": 1.1
     },
     "etch_time": {
       "name": "EtchTimeSeconds",
-      "node_id": "ns=2;i=6",
-      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=6",
+      "node_id": "t_771e56a1-45d64456",
+      "variable_id": "Topic127 OPC-UA Process^~^t_771e56a1-45d64456",
       "unit": " sec",
       "normal_min": 55,
       "normal_max": 65
     },
     "machine_status": {
       "name": "MachineStatus",
-      "node_id": "ns=2;i=7",
-      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=7",
+      "node_id": "t_85d620ad-7fcc4492",
+      "variable_id": "Topic127 OPC-UA Process^~^t_85d620ad-7fcc4492",
       "normal_value": "RUNNING",
       "warning_value": "MAINTENANCE"
     },
     "security_state": {
       "name": "SecurityState",
-      "node_id": "ns=2;i=8",
-      "variable_id": "Topic127 OPC-UA Process^~^ns=2;i=8",
+      "node_id": "t_51099579-440048d8",
+      "variable_id": "Topic127 OPC-UA Process^~^t_51099579-440048d8",
       "normal_value": "NORMAL",
       "critical_value": "CHECK_REQUIRED"
     }
