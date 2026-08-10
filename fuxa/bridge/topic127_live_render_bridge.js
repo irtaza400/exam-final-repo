@@ -5,15 +5,15 @@
   const REFRESH_MS = 1000;
 
   const TAGS = {
-    recipe: "ns=2;i=2",
-    process: "ns=2;i=3",
-    temperature: "ns=2;i=4",
-    pressure: "ns=2;i=5",
-    etchTime: "ns=2;i=6",
-    machineStatus: "ns=2;i=7",
-    securityState: "ns=2;i=8",
-    machineStatusCode: "ns=2;i=9",
-    securityStateCode: "ns=2;i=10",
+    recipe: "t_ae97f8b5-21374127",
+    process: "t_b3e17761-82294d16",
+    temperature: "t_d8cf674e-e6fb43c2",
+    pressure: "t_2e211a43-320c496d",
+    etchTime: "t_771e56a1-45d64456",
+    machineStatus: "t_85d620ad-7fcc4492",
+    securityState: "t_51099579-440048d8",
+    machineStatusCode: "t_2d4f07d8-f3d54284",
+    securityStateCode: "t_c5ae2336-d2a14ee1",
   };
 
   const COLORS = {

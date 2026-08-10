@@ -8,13 +8,13 @@ OUTPUT_FILE="${REPORT_DIR}/fuxa_live_tags_validation.json"
 mkdir -p "${REPORT_DIR}"
 
 TAG_IDS='[
-  "t_ae97f8b5-21374127",
-"t_b3e17761-82294d16",
-"t_d8cf674e-e6fb43c2",
-"t_2e211a43-320c496d",
-"t_771e56a1-45d64456",
-"t_85d620ad-7fcc4492",
-"t_51099579-440048d8"
+  "ns=2;i=2",
+  "ns=2;i=3",
+  "ns=2;i=4",
+  "ns=2;i=5",
+  "ns=2;i=6",
+  "ns=2;i=7",
+  "ns=2;i=8"
 ]'
 
 echo "Requesting seven live OPC-UA values from FUXA..."
@@ -45,13 +45,13 @@ path = Path(sys.argv[1])
 values = json.loads(path.read_text(encoding="utf-8"))
 
 expected = {
-"t_ae97f8b5-21374127": "RecipeID",
-"t_b3e17761-82294d16": "ProcessName",
-"t_d8cf674e-e6fb43c2": "TemperatureSetpoint",
-"t_2e211a43-320c496d": "PressureSetpoint",
-"t_771e56a1-45d64456": "EtchTimeSeconds",
-"t_85d620ad-7fcc4492": "MachineStatus",
-"t_51099579-440048d8": "SecurityState",
+    "ns=2;i=2": "RecipeID",
+    "ns=2;i=3": "ProcessName",
+    "ns=2;i=4": "TemperatureSetpoint",
+    "ns=2;i=5": "PressureSetpoint",
+    "ns=2;i=6": "EtchTimeSeconds",
+    "ns=2;i=7": "MachineStatus",
+    "ns=2;i=8": "SecurityState",
 }
 
 if not isinstance(values, list):

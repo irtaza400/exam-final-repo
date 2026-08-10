@@ -14,7 +14,7 @@
       "property": {
         "events": [],
         "variable": "RecipeID",
-        "variableId": "Topic127 OPC-UA Process^~^t_ae97f8b5-21374127",
+        "variableId": "Topic127 OPC-UA Process^~^ns=2;i=2",
         "variableSrc": "Topic127 OPC-UA Process",
         "alarmId": "",
         "alarmSrc": "",
@@ -31,7 +31,7 @@
       "property": {
         "events": [],
         "variable": "ProcessName",
-        "variableId": "Topic127 OPC-UA Process^~^t_b3e17761-82294d16",
+        "variableId": "Topic127 OPC-UA Process^~^ns=2;i=3",
         "variableSrc": "Topic127 OPC-UA Process",
         "alarmId": "",
         "alarmSrc": "",
@@ -48,7 +48,7 @@
       "property": {
         "events": [],
         "variable": "TemperatureSetpoint",
-        "variableId": "Topic127 OPC-UA Process^~^t_d8cf674e-e6fb43c2",
+        "variableId": "Topic127 OPC-UA Process^~^ns=2;i=4",
         "variableSrc": "Topic127 OPC-UA Process",
         "alarmId": "",
         "alarmSrc": "",
@@ -72,7 +72,7 @@
       "property": {
         "events": [],
         "variable": "PressureSetpoint",
-        "variableId": "Topic127 OPC-UA Process^~^t_2e211a43-320c496d",
+        "variableId": "Topic127 OPC-UA Process^~^ns=2;i=5",
         "variableSrc": "Topic127 OPC-UA Process",
         "alarmId": "",
         "alarmSrc": "",
@@ -96,7 +96,7 @@
       "property": {
         "events": [],
         "variable": "EtchTimeSeconds",
-        "variableId": "Topic127 OPC-UA Process^~^t_771e56a1-45d64456",
+        "variableId": "Topic127 OPC-UA Process^~^ns=2;i=6",
         "variableSrc": "Topic127 OPC-UA Process",
         "alarmId": "",
         "alarmSrc": "",
@@ -120,7 +120,7 @@
       "property": {
         "events": [],
         "variable": "MachineStatus",
-        "variableId": "Topic127 OPC-UA Process^~^t_85d620ad-7fcc4492",
+        "variableId": "Topic127 OPC-UA Process^~^ns=2;i=7",
         "variableSrc": "Topic127 OPC-UA Process",
         "alarmId": "",
         "alarmSrc": "",
@@ -137,7 +137,7 @@
       "property": {
         "events": [],
         "variable": "SecurityState",
-        "variableId": "Topic127 OPC-UA Process^~^t_51099579-440048d8",
+        "variableId": "Topic127 OPC-UA Process^~^ns=2;i=8",
         "variableSrc": "Topic127 OPC-UA Process",
         "alarmId": "",
         "alarmSrc": "",

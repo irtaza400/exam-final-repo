@@ -652,6 +652,61 @@ fi
 echo "Simulated blockchain ledger evidence generation: PASS"
 
 echo
+echo
+echo "Generating and validating FUXA Operations Overview view..."
+
+FUXA_OPERATIONS_GENERATOR="${REPO_ROOT}/scripts/generate_fuxa_operations_view.py"
+FUXA_OPERATIONS_IMPORTER="${REPO_ROOT}/scripts/import_fuxa_operations_view.py"
+FUXA_OPERATIONS_VALIDATOR="${REPO_ROOT}/scripts/validate_fuxa_operations_view.py"
+
+for required_file in \
+"${FUXA_OPERATIONS_GENERATOR}" \
+"${FUXA_OPERATIONS_IMPORTER}" \
+"${FUXA_OPERATIONS_VALIDATOR}"; do
+
+    if [[ ! -f "${required_file}" ]]; then
+        echo "ERROR: Required FUXA Operations Overview file not found:"
+        echo "  ${required_file}"
+        exit 1
+    fi
+
+done
+
+set +e
+python "${FUXA_OPERATIONS_GENERATOR}" 2>&1 |
+tee "${LOGS_DIR}/fuxa_operations_generation.log"
+FUXA_OPERATIONS_GENERATOR_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+if [[ "${FUXA_OPERATIONS_GENERATOR_EXIT_CODE}" -ne 0 ]]; then
+    echo "ERROR: FUXA Operations Overview generation failed."
+    exit "${FUXA_OPERATIONS_GENERATOR_EXIT_CODE}"
+fi
+
+set +e
+python "${FUXA_OPERATIONS_IMPORTER}" 2>&1 |
+tee "${LOGS_DIR}/fuxa_operations_import.log"
+FUXA_OPERATIONS_IMPORT_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+if [[ "${FUXA_OPERATIONS_IMPORT_EXIT_CODE}" -ne 0 ]]; then
+    echo "ERROR: FUXA Operations Overview import failed."
+    exit "${FUXA_OPERATIONS_IMPORT_EXIT_CODE}"
+fi
+
+set +e
+python "${FUXA_OPERATIONS_VALIDATOR}" 2>&1 |
+tee "${LOGS_DIR}/fuxa_operations_validation.log"
+FUXA_OPERATIONS_VALIDATION_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+if [[ "${FUXA_OPERATIONS_VALIDATION_EXIT_CODE}" -ne 0 ]]; then
+    echo "ERROR: FUXA Operations Overview validation failed."
+    exit "${FUXA_OPERATIONS_VALIDATION_EXIT_CODE}"
+fi
+
+echo "FUXA Operations Overview workflow: PASS"
+
 echo "Generating and validating FUXA simulated-ledger health view..."
 
 FUXA_LEDGER_GENERATOR="${REPO_ROOT}/scripts/generate_fuxa_ledger_health_view.py"
