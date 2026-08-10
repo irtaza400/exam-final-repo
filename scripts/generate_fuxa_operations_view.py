@@ -531,7 +531,7 @@ def validate_view(view: dict[str, Any]) -> None:
         variable_id = item["property"]["variableId"]
 
         if not variable_id.startswith(
-            "Topic127 OPC-UA Process^~^ns=2;i="
+            "Topic127 OPC-UA Process^~^t_"
         ):
             raise ValueError(
                 f"Invalid binding: {variable_id}"
