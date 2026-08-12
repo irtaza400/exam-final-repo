@@ -4,6 +4,7 @@ Simulates nanolithography/deposition/etching equipment variables.
 import random
 import time
 from opcua import Server
+from opcua import ua
 
 ENDPOINT = "opc.tcp://0.0.0.0:4840/topic127/opcua/server/"
 NAMESPACE = "urn:topic127:nanomanufacturing"
@@ -15,23 +16,58 @@ idx = server.register_namespace(NAMESPACE)
 objects = server.get_objects_node()
 machine = objects.add_object(idx, "NanoManufacturingMachine")
 
-recipe_id = machine.add_variable(idx, "RecipeID", "RCP-LITHO-001")
-process_name = machine.add_variable(idx, "ProcessName", "nanolithography")
-temperature_setpoint = machine.add_variable(idx, "TemperatureSetpoint", 22.0)
-pressure_setpoint = machine.add_variable(idx, "PressureSetpoint", 1.0)
-etch_time = machine.add_variable(idx, "EtchTimeSeconds", 60)
-machine_status = machine.add_variable(idx, "MachineStatus", "RUNNING")
-security_state = machine.add_variable(idx, "SecurityState", "NORMAL")
+recipe_id = machine.add_variable(
+    ua.NodeId("RecipeID", idx),
+    "RecipeID",
+    "RCP-LITHO-001"
+)
+
+process_name = machine.add_variable(
+    ua.NodeId("ProcessName", idx),
+    "ProcessName",
+    "nanolithography"
+)
+
+temperature_setpoint = machine.add_variable(
+    ua.NodeId("TemperatureSetpoint", idx),
+    "TemperatureSetpoint",
+    22.0
+)
+
+pressure_setpoint = machine.add_variable(
+    ua.NodeId("PressureSetpoint", idx),
+    "PressureSetpoint",
+    1.0
+)
+
+etch_time = machine.add_variable(
+    ua.NodeId("EtchTimeSeconds", idx),
+    "EtchTimeSeconds",
+    60
+)
+
+machine_status = machine.add_variable(
+    ua.NodeId("MachineStatus", idx),
+    "MachineStatus",
+    "RUNNING"
+)
+
+security_state = machine.add_variable(
+    ua.NodeId("SecurityState", idx),
+    "SecurityState",
+    "NORMAL"
+)
 
 # Derived numeric codes are exposed specifically for reliable HMI
 # colour indicators while retaining the original human-readable tags.
 machine_status_code = machine.add_variable(
-    idx,
+    ua.NodeId("MachineStatusCode", idx),
     "MachineStatusCode",
     1,
 )
+
 security_state_code = machine.add_variable(
-    idx,
+    ua.NodeId("SecurityStateCode", idx),
     "SecurityStateCode",
     1,
 )
