@@ -403,7 +403,7 @@ The objective is not simply to run software, but to demonstrate a traceable engi
 # 14. Repository Structure
 
 ```text
-exam-final-repo-v2/
+exam-final-repo/
 │
 ├── config/
 │   ├── approved_suppliers.json
@@ -508,8 +508,8 @@ Python-based industrial and AI services run alongside the containerized infrastr
 Clone the repository and enter the project directory:
 
 ```bash
-git clone https://github.com/irtaza400/exam-final-repo-v2.git
-cd exam-final-repo-v2
+git clone https://github.com/irtaza400/exam-final-repo.git
+cd exam-final-repo
 ```
 
 Make scripts executable:
