@@ -652,7 +652,21 @@ fi
 echo "Simulated blockchain ledger evidence generation: PASS"
 
 echo
+echo "Publishing simulated ledger health metrics to InfluxDB..."
+
+env \
+    INFLUX_URL="${INFLUX_URL}" \
+    INFLUX_ORG="${INFLUX_ORG}" \
+    INFLUX_BUCKET="${INFLUX_BUCKET}" \
+    INFLUX_TOKEN="${INFLUX_TOKEN}" \
+    python -m src.publish_ledger_metrics 2>&1 |
+    tee "${LOGS_DIR}/publish_ledger_metrics.log"
+
+echo "Simulated ledger health metrics publication: PASS"
+
 echo
+echo
+
 echo "Generating and validating FUXA Operations Overview view..."
 
 FUXA_OPERATIONS_GENERATOR="${REPO_ROOT}/scripts/generate_fuxa_operations_view.py"
