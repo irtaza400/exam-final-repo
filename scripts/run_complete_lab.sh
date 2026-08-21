@@ -667,6 +667,59 @@ echo "Simulated ledger health metrics publication: PASS"
 echo
 echo
 
+echo "Generating and validating FUXA simulated-ledger health view..."
+
+FUXA_LEDGER_GENERATOR="${REPO_ROOT}/scripts/generate_fuxa_ledger_health_view.py"
+FUXA_LEDGER_IMPORTER="${REPO_ROOT}/scripts/import_fuxa_ledger_health_view.py"
+FUXA_LEDGER_VALIDATOR="${REPO_ROOT}/scripts/validate_fuxa_ledger_health_view.py"
+
+for required_file in \
+    "${FUXA_LEDGER_GENERATOR}" \
+    "${FUXA_LEDGER_IMPORTER}" \
+    "${FUXA_LEDGER_VALIDATOR}"; do
+
+    if [[ ! -f "${required_file}" ]]; then
+        echo "ERROR: Required FUXA ledger-health file not found:"
+        echo "  ${required_file}"
+        exit 1
+    fi
+done
+
+set +e
+python "${FUXA_LEDGER_GENERATOR}" 2>&1 |
+    tee "${LOGS_DIR}/fuxa_ledger_health_generation.log"
+FUXA_LEDGER_GENERATOR_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+if [[ "${FUXA_LEDGER_GENERATOR_EXIT_CODE}" -ne 0 ]]; then
+    echo "ERROR: FUXA ledger-health view generation failed."
+    exit "${FUXA_LEDGER_GENERATOR_EXIT_CODE}"
+fi
+
+set +e
+python "${FUXA_LEDGER_IMPORTER}" 2>&1 |
+    tee "${LOGS_DIR}/fuxa_ledger_health_import.log"
+FUXA_LEDGER_IMPORT_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+if [[ "${FUXA_LEDGER_IMPORT_EXIT_CODE}" -ne 0 ]]; then
+    echo "ERROR: FUXA ledger-health view import failed."
+    exit "${FUXA_LEDGER_IMPORT_EXIT_CODE}"
+fi
+
+set +e
+python "${FUXA_LEDGER_VALIDATOR}" 2>&1 |
+    tee "${LOGS_DIR}/fuxa_ledger_health_validation.log"
+FUXA_LEDGER_VALIDATION_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+if [[ "${FUXA_LEDGER_VALIDATION_EXIT_CODE}" -ne 0 ]]; then
+    echo "ERROR: FUXA ledger-health validation failed."
+    exit "${FUXA_LEDGER_VALIDATION_EXIT_CODE}"
+fi
+
+echo "FUXA simulated-ledger health workflow: PASS"
+
 echo "Generating and validating FUXA Operations Overview view..."
 
 FUXA_OPERATIONS_GENERATOR="${REPO_ROOT}/scripts/generate_fuxa_operations_view.py"
@@ -721,58 +774,6 @@ fi
 
 echo "FUXA Operations Overview workflow: PASS"
 
-echo "Generating and validating FUXA simulated-ledger health view..."
-
-FUXA_LEDGER_GENERATOR="${REPO_ROOT}/scripts/generate_fuxa_ledger_health_view.py"
-FUXA_LEDGER_IMPORTER="${REPO_ROOT}/scripts/import_fuxa_ledger_health_view.py"
-FUXA_LEDGER_VALIDATOR="${REPO_ROOT}/scripts/validate_fuxa_ledger_health_view.py"
-
-for required_file in \
-    "${FUXA_LEDGER_GENERATOR}" \
-    "${FUXA_LEDGER_IMPORTER}" \
-    "${FUXA_LEDGER_VALIDATOR}"; do
-
-    if [[ ! -f "${required_file}" ]]; then
-        echo "ERROR: Required FUXA ledger-health file not found:"
-        echo "  ${required_file}"
-        exit 1
-    fi
-done
-
-set +e
-python "${FUXA_LEDGER_GENERATOR}" 2>&1 |
-    tee "${LOGS_DIR}/fuxa_ledger_health_generation.log"
-FUXA_LEDGER_GENERATOR_EXIT_CODE=${PIPESTATUS[0]}
-set -e
-
-if [[ "${FUXA_LEDGER_GENERATOR_EXIT_CODE}" -ne 0 ]]; then
-    echo "ERROR: FUXA ledger-health view generation failed."
-    exit "${FUXA_LEDGER_GENERATOR_EXIT_CODE}"
-fi
-
-set +e
-python "${FUXA_LEDGER_IMPORTER}" 2>&1 |
-    tee "${LOGS_DIR}/fuxa_ledger_health_import.log"
-FUXA_LEDGER_IMPORT_EXIT_CODE=${PIPESTATUS[0]}
-set -e
-
-if [[ "${FUXA_LEDGER_IMPORT_EXIT_CODE}" -ne 0 ]]; then
-    echo "ERROR: FUXA ledger-health view import failed."
-    exit "${FUXA_LEDGER_IMPORT_EXIT_CODE}"
-fi
-
-set +e
-python "${FUXA_LEDGER_VALIDATOR}" 2>&1 |
-    tee "${LOGS_DIR}/fuxa_ledger_health_validation.log"
-FUXA_LEDGER_VALIDATION_EXIT_CODE=${PIPESTATUS[0]}
-set -e
-
-if [[ "${FUXA_LEDGER_VALIDATION_EXIT_CODE}" -ne 0 ]]; then
-    echo "ERROR: FUXA ledger-health validation failed."
-    exit "${FUXA_LEDGER_VALIDATION_EXIT_CODE}"
-fi
-
-echo "FUXA simulated-ledger health workflow: PASS"
 
 # The generator renders the current runtime hash into the source JSON.
 # Restore the committed baseline so the repository remains clean.
