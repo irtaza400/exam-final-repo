@@ -26,6 +26,7 @@
 #
 # Optional overrides:
 #   STOP_MONITORING_AFTER_LAB=1 ./scripts/run_complete_lab.sh
+#   STOP_PROTOCOL_SERVICES_AFTER_LAB=1 ./scripts/run_complete_lab.sh
 #   MQTT_BROKER=localhost INFLUX_URL=http://localhost:8086 \
 #   ./scripts/run_complete_lab.sh
 # ================================================================
@@ -67,6 +68,7 @@ MODBUS_PORT="${MODBUS_PORT:-5020}"
 SERVER_START_TIMEOUT="${SERVER_START_TIMEOUT:-30}"
 DATA_START_TIMEOUT="${DATA_START_TIMEOUT:-45}"
 STOP_MONITORING_AFTER_LAB="${STOP_MONITORING_AFTER_LAB:-0}"
+STOP_PROTOCOL_SERVICES_AFTER_LAB="${STOP_PROTOCOL_SERVICES_AFTER_LAB:-0}"
 SKIP_SURICATA_DEMO="${SKIP_SURICATA_DEMO:-0}"
 
 MQTT_WRITER_PID_FILE="${RUNTIME_DIR}/mqtt_to_influx.pid"
@@ -162,18 +164,22 @@ cleanup() {
     local original_exit_code=$?
 
     echo
-    echo "Cleaning up locally started protocol services..."
+    if [[ "${STOP_PROTOCOL_SERVICES_AFTER_LAB}" == "1" ]]; then
+        echo "Cleaning up locally started protocol services..."
 
-    if pid_is_running "${OPCUA_PID}"; then
-        echo "Stopping OPC-UA server process: ${OPCUA_PID}"
-        kill "${OPCUA_PID}" 2>/dev/null || true
-        wait "${OPCUA_PID}" 2>/dev/null || true
-    fi
+        if pid_is_running "${OPCUA_PID}"; then
+            echo "Stopping OPC-UA server process: ${OPCUA_PID}"
+            kill "${OPCUA_PID}" 2>/dev/null || true
+            wait "${OPCUA_PID}" 2>/dev/null || true
+        fi
 
-    if pid_is_running "${MODBUS_PID}"; then
-        echo "Stopping Modbus server process: ${MODBUS_PID}"
-        kill "${MODBUS_PID}" 2>/dev/null || true
-        wait "${MODBUS_PID}" 2>/dev/null || true
+        if pid_is_running "${MODBUS_PID}"; then
+            echo "Stopping Modbus server process: ${MODBUS_PID}"
+            kill "${MODBUS_PID}" 2>/dev/null || true
+            wait "${MODBUS_PID}" 2>/dev/null || true
+        fi
+    else
+        echo "Protocol services will remain running for the live HMI/demo."
     fi
 
     if [[ "${STOP_MONITORING_AFTER_LAB}" == "1" ]]; then
