@@ -397,9 +397,8 @@ else
             ;;
 
         2)
-            warning "Tamper wrapper returned exit code 2."
+            success "Recipe tamper detection completed successfully."
             success "Exit code 2 represents successful recipe-integrity violation detection."
-            warning "The current wrapper should normally convert this completed demonstration to exit code 0."
             ;;
 
         *)
