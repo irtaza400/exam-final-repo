@@ -60,6 +60,8 @@ data/backups/
 # FUXA generated runtime and project data
 fuxa/appdata/*
 !fuxa/appdata/.gitkeep
+!fuxa/appdata/project.fuxap.db
+
 fuxa/db/*
 !fuxa/db/.gitkeep
 fuxa/logs/*
