@@ -1,0 +1,825 @@
+A05 — Topic 127 Security Architecture & Trust Boundaries
+========================================================================================================================
+              TOPIC 127 — SECURITY / SAFETY / GOVERNANCE ARCHITECTURE
+    Process Security • Recipe Integrity • Supply Chain • EHS • IDS • DevSecOps • Audit • Compliance
+========================================================================================================================
+
+                                     ┌───────────────────────────────────────┐
+                                     │      TOPIC 127 MANUFACTURING          │
+                                     │       SECURITY ENVIRONMENT            │
+                                     │                                       │
+                                     │ Educational / simulated PoC           │
+                                     │ Real executable security controls     │
+                                     └───────────────────┬───────────────────┘
+                                                         │
+                                                         │ Security-relevant
+                                                         │ events / findings
+                                                         ▼
+========================================================================================================================
+TRUST BOUNDARY 1 — MANUFACTURING / OT
+ ┌──────────────────────────────────┐                 ┌──────────────────────────────────┐
+ │ CLEANROOM / ENVIRONMENTAL        │                 │ INDUSTRIAL PROCESS SOURCES       │
+ │ SOURCES                          │                 │                                  │
+ │                                  │                 │ • Nanolithography                │
+ │ • Particle count                 │                 │ • Deposition                     │
+ │ • Temperature                    │                 │ • Etching                        │
+ │ • Humidity                       │                 │ • Process parameters             │
+ │ • Airflow                        │                 │ • Equipment state                │
+ │ • Gas indicators                 │                 │ • PLC / register state           │
+ │ • PPE status                     │                 │                                  │
+ │                                  │                 │ OPC-UA / Modbus simulators       │
+ │ Software sensor simulator        │                 │                                  │
+ └─────────────────┬────────────────┘                 └─────────────────┬────────────────┘
+                   │                                                    │
+                   │ Telemetry                                          │ Industrial values
+                   ▼                                                    ▼
+ ┌──────────────────────────────────┐                 ┌──────────────────────────────────┐
+ │ EDGE / MQTT TELEMETRY            │                 │ INDUSTRIAL PROTOCOLS             │
+ │                                  │                 │                                  │
+ │ Raw MQTT telemetry               │                 │ OPC-UA :4840                     │
+ │ topic127/raw/cleanroom           │                 │ Modbus TCP :5020                 │
+ └─────────────────┬────────────────┘                 └─────────────────┬────────────────┘
+                   │                                                    │
+                   │                                                    │
+                   ▼                                                    ▼
+========================================================================================================================
+TRUST BOUNDARY 2 — VALIDATION / CONTROL
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ CLEANROOM / TELEMETRY VALIDATION                                                                                     │
+│                                                                                                                      │
+│ Raw MQTT                                                                                                             │
+│   │                                                                                                                  │
+│   ▼                                                                                                                  │
+│ Edge Gateway                                                                                                         │
+│   ├── Required-field validation                                                                                      │
+│   ├── Numeric-range validation                                                                                       │
+│   ├── Event-status validation                                                                                        │
+│   ├── PPE boolean validation                                                                                         │
+│   ├── Telemetry enrichment                                                                                           │
+│   └── Validated / rejected message routing                                                                           │
+│   │                                                                                                                  │
+│   ▼                                                                                                                  │
+│ topic127/edge/validated                                                                                              │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ OPC-UA PROCESS SECURITY                                                                                              │
+│                                                                                                                      │
+│ OPC-UA Server :4840                                                                                                  │
+│   │                                                                                                                  │
+│   ▼                                                                                                                  │
+│ OPC-UA Client Validator                                                                                              │
+│   ├── Recipe ID verification                                                                                         │
+│   ├── Manufacturing-process validation                                                                               │
+│   ├── Temperature setpoint check                                                                                     │
+│   ├── Pressure setpoint check                                                                                        │
+│   ├── Etch-time check                                                                                                │
+│   └── Equipment security-state check                                                                                 │
+│   │                                                                                                                  │
+│   ▼                                                                                                                  │
+│ OOS / PROCESS SECURITY FINDING                                                                                       │
+│   │                                                                                                                  │
+│   ▼                                                                                                                  │
+│ reports/process_security_incidents.csv                                                                               │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ MODBUS / PLC PROCESS SECURITY                                                                                        │
+│                                                                                                                      │
+│ Modbus TCP Server :5020                                                                                              │
+│   │                                                                                                                  │
+│   ▼                                                                                                                  │
+│ Modbus Client Validator                                                                                              │
+│   ├── Motor-speed check                                                                                              │
+│   ├── Valve-status read                                                                                              │
+│   ├── Chamber-pressure check                                                                                         │
+│   ├── PLC alarm-code check                                                                                           │
+│   └── Recipe-lock check                                                                                              │
+│   │                                                                                                                  │
+│   ▼                                                                                                                  │
+│ OOS / PLC SECURITY FINDING                                                                                           │
+│   │                                                                                                                  │
+│   ▼                                                                                                                  │
+│ reports/modbus_security_incidents.csv                                                                                │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+========================================================================================================================
+TRUST BOUNDARY 3 — PROCESS INTEGRITY
+                              ┌──────────────────────────────┐
+                              │ APPROVED MANUFACTURING       │
+                              │ RECIPE                       │
+                              │                              │
+                              │ data/approved_recipe.json    │
+                              └──────────────┬───────────────┘
+                                             │
+                                             ▼
+                              ┌──────────────────────────────┐
+                              │ APPROVED SHA-256 BASELINE    │
+                              │                              │
+                              │ data/approved_recipe.sha256 │
+                              └──────────────┬───────────────┘
+                                             │
+                                             ▼
+                              ┌──────────────────────────────┐
+                              │ CURRENT RECIPE SHA-256       │
+                              │ HASH                         │
+                              └──────────────┬───────────────┘
+                                             │
+                                             ▼
+                              ┌──────────────────────────────┐
+                              │ INTEGRITY COMPARISON         │
+                              └──────────────┬───────────────┘
+                                             │
+                              ┌──────────────┴───────────────┐
+                              │                              │
+                              ▼                              ▼
+                        HASH MATCH                     HASH MISMATCH
+                              │                              │
+                              ▼                              ▼
+                 RECIPE INTEGRITY VERIFIED                  CRITICAL
+                                                       SECURITY FINDING
+                                                             │
+                                                             ▼
+                                              Manufacturing recipe tampering
+                                                        detected
+                                                             │
+                                                             ▼
+                                              RECOMMENDED CONTROL:
+                                              Block production / restore
+                                              approved recipe / notify
+                                              OT security team
+                                                             │
+                                                             ▼
+                                      reports/recipe_tamper_incidents.csv
+========================================================================================================================
+TRUST BOUNDARY 4 — SUPPLY CHAIN / MATERIAL SECURITY
+               ┌──────────────────────────────┐
+               │ SUPPLIER REGISTRY            │
+               │                              │
+               │ • Supplier identity          │
+               │ • ACTIVE / non-ACTIVE status │
+               │ • Approved material scope    │
+               │ • Country-risk classification│
+               └──────────────┬───────────────┘
+                              │
+                              ▼
+               ┌──────────────────────────────┐
+               │ MATERIAL BATCH               │
+               │                              │
+               │ • Batch / lot                │
+               │ • Certificate                │
+               │ • Quality status             │
+               │ • Export-risk attributes     │
+               └──────────────┬───────────────┘
+                              │
+                              ▼
+               ┌──────────────────────────────┐
+               │ SUPPLIER VALIDATION          │
+               │                              │
+               │ Supplier exists?             │
+               │ Supplier ACTIVE?             │
+               │ Material approved?           │
+               └──────────────┬───────────────┘
+                              │
+                              ▼
+               ┌──────────────────────────────┐
+               │ MATERIAL RISK ENGINE         │
+               │                              │
+               │ • Certificate status         │
+               │ • Quality status             │
+               │ • Export / dual-use risk     │
+               │ • Country risk               │
+               │ • Configured risk weights    │
+               └──────────────┬───────────────┘
+                              │
+                              ▼
+               ┌──────────────────────────────┐
+               │ RISK SCORE / DECISION        │
+               │                              │
+               │ 0–39   → APPROVE_FOR_USE     │
+               │ 40–69  → QUARANTINE / QMS    │
+               │ 70–100 → REJECT / LEGAL      │
+               └──────────────┬───────────────┘
+                              │
+                              ▼
+               ┌──────────────────────────────┐
+               │ HASH-CHAINED TRACEABILITY    │
+               │ LEDGER                       │
+               │                              │
+               │ Genesis Hash                 │
+               │ Previous Hash                │
+               │ Current Hash                 │
+               └──────────────┬───────────────┘
+                              │
+                              ▼
+               ┌──────────────────────────────┐
+               │ LEDGER VERIFICATION          │
+               │                              │
+               │ • Record ordering            │
+               │ • Previous-hash continuity   │
+               │ • Current-hash consistency   │
+               └──────────────┬───────────────┘
+                              │
+                ┌─────────────┴─────────────────────────┐
+                │                                       │
+                ▼                                       ▼
+   reports/supply_chain_ledger.json     reports/ledger_verification_report.json
+                │
+                ▼
+   reports/supply_chain_risk_report.csv
+========================================================================================================================
+TRUST BOUNDARY 5 — EHS / WORKER SAFETY
+          ┌─────────────────────────────────────────────┐
+          │ SAFETY / ENVIRONMENTAL EVENTS               │
+          │                                             │
+          │ • Gas exposure                              │
+          │ • PPE non-compliance                        │
+          │ • Chemical spill                            │
+          │ • Nanoparticle exposure                     │
+          │ • Hazardous-waste container status          │
+          │ • Emission threshold                        │
+          └────────────────────────┬────────────────────┘
+                                   │
+                                   ▼
+          ┌─────────────────────────────────────────────┐
+          │ EHS INCIDENT ENGINE                         │
+          └────────────────────────┬────────────────────┘
+                                   │
+                                   ▼
+          ┌─────────────────────────────────────────────┐
+          │ SEVERITY CLASSIFICATION                     │
+          │                                             │
+          │ NORMAL                                      │
+          │ HIGH                                        │
+          │ CRITICAL                                    │
+          └────────────────────────┬────────────────────┘
+                                   │
+                     ┌─────────────┴──────────────┐
+                     │                            │
+                     ▼                            ▼
+                HIGH / OTHER                  CRITICAL
+                     │                            │
+                     │                            ├── Evacuate zone
+                     │                            ├── Isolate process
+                     │                            └── Notify EHS response team
+                     │
+                     ▼
+              EHS safety evidence
+                     │
+                     ▼
+              reports/ehs_incidents.csv
+========================================================================================================================
+TRUST BOUNDARY 6 — CYBERSECURITY / INDUSTRIAL IDS
+              CONTROLLED SECURITY TEST INPUT
+                          │
+                          ▼
+         ┌────────────────────────────────────┐
+         │ SURICATA SECURITY DEMONSTRATION    │
+         │                                    │
+         │ Optional security-demo profile     │
+         │ Controlled PCAP-based analysis     │
+         └──────────────────┬─────────────────┘
+                            │
+                            ▼
+                   DETECTION RULE MATCHING
+                            │
+           ┌────────────────┼──────────────────┐
+           │                │                  │
+           ▼                ▼                  ▼
+     OPC-UA :4840      MQTT :1883        FUXA :1881
+     Unauthorized     Suspicious         Suspicious
+     Access Attempt   Command Payload    HMI Access Attempt
+           │                │                  │
+           └────────────────┴──────────┬───────┘
+                                       │
+                                       ▼
+                            SECURITY FINDING
+                                       │
+                                       ▼
+                            SECURITY EVIDENCE
+
+The current Suricata rules specifically define demonstrations for:
+• Unauthorized OPC-UA access attempt
+• Suspicious MQTT command payload
+• Suspicious HMI/FUXA access attempt
+
+IMPORTANT:
+Suricata is used as a controlled demonstration IDS over supplied PCAP/test
+traffic. It is NOT represented as continuous production network monitoring.
+========================================================================================================================
+TRUST BOUNDARY 7 — DEVSECOPS
+                     TOPIC 127 REPOSITORY
+                              │
+                              ▼
+                   ┌─────────────────────────┐
+                   │ DEVSECOPS SCAN ENGINE   │
+                   └────────────┬────────────┘
+                                │
+             ┌──────────────────┼──────────────────┐
+             │                  │                  │
+             ▼                  ▼                  ▼
+          BANDIT             SEMGREP             TRIVY
+             │                  │                  │
+             └──────────────────┼──────────────────┘
+                                │
+                                ▼
+                      SECURITY SCAN OUTPUT
+                                │
+                                ▼
+                reports/security_scan_report.txt
+
+Implementation scope:
+• Bandit scans source under src
+• Semgrep performs repository/source scanning
+• Trivy performs filesystem security scanning for HIGH/CRITICAL findings
+========================================================================================================================
+TRUST BOUNDARY 8 — AI / ML ANALYTICS
+            CLEANROOM / ENVIRONMENTAL FEATURE SET
+                           │
+         ┌─────────────────┼──────────────────────┐
+         │                 │                      │
+         ▼                 ▼                      ▼
+   particle_count     temperature              humidity
+         │                 │                      │
+         ├─────────────────┼──────────────────────┤
+         │                 │                      │
+         ▼                 ▼                      ▼
+      airflow           gas_ppm             ppe_compliant
+         │                 │                      │
+         └─────────────────┼──────────────────────┘
+                           │
+         ┌─────────────────┴────────────────────┐
+         │                                      │
+         ▼                                      ▼
+scikit-learn ML Engine                TensorFlow / Keras
+IsolationForest                       Autoencoder
+         │                                      │
+         │                                      ├── Normal-data training
+         │                                      ├── Feature scaling
+         │                                      ├── Reconstruction error
+         │                                      └── Threshold decision
+         │                                      │
+         ▼                                      ▼
+reports/incidents.csv                 reports/tensorflow_anomaly_incidents.csv
+
+IMPORTANT:
+The repository contains two separate implemented ML paths:
+• scikit-learn IsolationForest anomaly detection
+• TensorFlow/Keras autoencoder anomaly detection
+They are not represented as one combined model.
+========================================================================================================================
+TRUST BOUNDARY 9 — EDGE AI / TELEMETRY ANALYTICS
+                 topic127/edge/validated
+                          │
+                          ▼
+             ┌────────────────────────────┐
+             │ CUSTOM EDGE AI ENGINE      │
+             │                            │
+             │ Rule-based risk scoring    │
+             │ Severity classification    │
+             │ Abnormal-metric analysis   │
+             │ Recommended actions        │
+             └─────────────┬──────────────┘
+                           │
+                ┌──────────┴───────────┐
+                │                      │
+                ▼                      ▼
+         AI Result Topic          AI Alert Topic
+                │                      │
+                ▼                      ▼
+          AI result / alert      AI result / alert
+          evidence / output      evidence / output
+
+IMPORTANT:
+The custom Edge AI implementation is rule-based inference.
+It is NOT represented as a trained machine-learning model.
+========================================================================================================================
+LOGICAL SECURITY / SAFETY DECISION VIEW
+  ┌────────────────────┐
+  │ PROCESS SECURITY   │
+  └─────────┬──────────┘
+            │
+  ┌────────────────────┐
+  │ RECIPE INTEGRITY   │
+  └─────────┬──────────┘
+            │
+  ┌────────────────────┐
+  │ SUPPLY CHAIN       │
+  └─────────┬──────────┘
+            │
+  ┌────────────────────┐
+  │ EHS / SAFETY       │
+  └─────────┬──────────┘
+            │
+  ┌────────────────────┐
+  │ CYBER / IDS        │
+  └─────────┬──────────┘
+            │
+  ┌────────────────────┐
+  │ AI / ML FINDINGS   │
+  └─────────┬──────────┘
+            │
+            ▼
+┌──────────────────────────────────────┐
+│ LOGICAL SECURITY / SAFETY FINDING    │
+│                                      │
+│ Detection / validation               │
+│ Risk / severity assessment           │
+│ Recommended control action           │
+└──────────────────┬───────────────────┘
+                   │
+      ┌────────────┼───────────────────┐
+      │            │                   │
+      ▼            ▼                   ▼
+   NORMAL        REVIEW             CRITICAL
+      │            │                   │
+      │            ├── QMS review      ├── Block / isolate
+      │            ├── Investigation   ├── Emergency action
+      │            └── Verification    ├── Restore integrity
+      │                                └── Security response
+      │
+      ▼
+Continue monitoring
+
+IMPORTANT:
+This section is a logical governance view of the independently implemented
+security/safety controls. The repository does NOT implement one universal
+security-decision engine covering every domain.
+========================================================================================================================
+INCIDENT / EVIDENCE ARCHITECTURE
+                     IMPLEMENTED INCIDENT SOURCES
+                                  │
+      ┌───────────────────────────┼─────────────────────────────────┐
+      │                           │                                 │
+      ▼                           ▼                                 ▼
+reports/incidents.csv  process_security_incidents.csv  modbus_security_incidents.csv
+      │                           │                                 │
+      └───────────────────────────┼─────────────────────────────────┘
+                                  │
+      ┌───────────────────────────┴─────────────────────────────────┐
+      │                                                             │
+      ▼                                                             ▼
+reports/recipe_tamper_incidents.csv                  reports/ehs_incidents.csv
+      │                                                             │
+      └───────────────────────────┬─────────────────────────────────┘
+                                  │
+                                  ▼
+                     ┌──────────────────────────┐
+                     │ INCIDENT MANAGER         │
+                     │                          │
+                     │ Configured incident      │
+                     │ source aggregation       │
+                     │                          │
+                     │ Severity normalization   │
+                     │ Source identification    │
+                     └────────────┬─────────────┘
+                                  │
+                                  ▼
+                     reports/incident_summary.csv
+
+IMPORTANT:
+The Incident Manager aggregates the configured operational incident CSVs.
+It does NOT currently provide a universal repository-wide evidence bus.
+The following remain separate evidence products:
+• Supply-chain ledger / risk reports
+• TensorFlow anomaly report
+• DevSecOps security scan report
+• Audit log
+• Compliance report
+========================================================================================================================
+AUDIT LOGGING LAYER
+             DEMONSTRATION OPERATIONAL / CONTROL EVENTS
+                              │
+          ┌───────────────────┼────────────────────────┐
+          │                   │                        │
+          ▼                   ▼                        ▼
+   Dashboard View       Recipe Validation         Security Scan
+          │                   │                        │
+          └───────────────────┼────────────────────────┘
+                              │
+                              ▼
+                       ┌──────────────┐
+                       │ AUDIT LOGGER │
+                       └───────┬──────┘
+                               │
+                               ▼
+                      reports/audit_log.csv
+
+Implemented demonstration audit examples include:
+• operator → view dashboard
+• process_validator → validate recipe
+• security_engine → scan source code
+• ehs_engine → create safety incident
+• supply_chain → verify supplier batch
+
+IMPORTANT:
+The current audit logger demonstrates audit-event recording through a
+standalone logger. It is NOT represented as a live enterprise SIEM,
+SOAR platform, or universal event-bus implementation.
+========================================================================================================================
+COMPLIANCE / GOVERNANCE LAYER
+                       EVIDENCE FILES / STATUS
+                                  │
+   ┌──────────────────────────────┼───────────────────────────────┐
+   │                              │                               │
+   ▼                              ▼                               ▼
+Cleanroom / AI                 Process Security                Recipe Integrity
+incident evidence              reports                         evidence
+   │                              │                               │
+   ├──────────────────────────────┼───────────────────────────────┤
+   │                              │                               │
+   ▼                              ▼                               ▼
+Supply Chain                   EHS incident                    Supporting evidence
+ledger / risk                  evidence / report               and audit records
+   │                              │                               │
+   └──────────────────────────────┼───────────────────────────────┘
+                                  │
+                                  ▼
+                   ┌────────────────────────────────┐
+                   │ COMPLIANCE REPORT GENERATOR    │
+                   │                                │
+                   │ Evidence/status mapping        │
+                   │ Report generation              │
+                   └────────────────┬───────────────┘
+                                    │
+                                    ▼
+                      reports/compliance_report.md
+
+Compliance mapping in the current repository covers themes including:
+• ISO 14644-style cleanroom monitoring
+• ISO 14001-style environmental management
+• OSHA / worker-safety-style evidence
+• EPA-style environmental evidence
+• IEC 62443 / ICS security themes
+• Supply-chain security
+
+IMPORTANT:
+The compliance generator produces laboratory evidence/status mapping and
+reporting. It does NOT independently calculate regulatory compliance,
+provide certification, or submit legal regulatory filings.
+========================================================================================================================
+SECURITY CONTROL → EVIDENCE MATRIX
+
+CONTROL                 IMPLEMENTED MECHANISM                  PRIMARY EVIDENCE
+----------------------------------------------------------------------------------------------------------------------
+Telemetry validation    Edge Gateway validation                MQTT validation / outputs
+Cleanroom ML            scikit-learn IsolationForest           reports/incidents.csv
+TensorFlow anomaly      Keras autoencoder                      reports/tensorflow_anomaly_incidents.csv
+Edge AI                 Rule-based inference                   AI result / alert output
+OPC-UA security         OPC-UA client validator                process_security_incidents.csv
+Modbus security         Modbus client validator                modbus_security_incidents.csv
+Recipe integrity        SHA-256 comparison                     recipe_tamper_incidents.csv
+Supplier security       Supplier registry validation           supply-chain reports
+Material risk           Risk-score decision engine             supply_chain_risk_report.csv
+Traceability            Hash-chained ledger                    supply_chain_ledger.json
+Ledger integrity        Chain verification                     ledger_verification_report.json
+EHS / worker safety     EHS incident engine                    ehs_incidents.csv
+Industrial IDS          Suricata PCAP demonstration            Suricata security output
+Source security         Bandit / Semgrep / Trivy               security_scan_report.txt
+Incident aggregation    Incident Manager                       incident_summary.csv
+Auditability            Audit Logger                           audit_log.csv
+Compliance reporting    Compliance Report Generator            compliance_report.md
+========================================================================================================================
+SECURITY RESPONSE PATTERNS
+
+PROCESS CONTROL:
+OPC-UA / Modbus finding
+  ↓
+Out-of-Specification / Security Event
+  ↓
+HIGH severity
+  ↓
+Validate equipment state / verify recipe / pause process if required
+  ↓
+Process Security Evidence
+
+RECIPE INTEGRITY:
+SHA-256 mismatch
+  ↓
+CRITICAL
+  ↓
+RECOMMENDED CONTROL:
+Block production / restore approved recipe / notify OT security
+  ↓
+Recipe Tamper Evidence
+
+SUPPLY CHAIN:
+Supplier / material / certificate / quality / export / country exception
+  ↓
+Risk Score
+  ↓
+APPROVE_FOR_USE
+OR
+QUARANTINE_AND_QMS_REVIEW
+OR
+REJECT_OR_LEGAL_REVIEW
+  ↓
+Ledger Record
+  ↓
+Ledger Verification
+  ↓
+Supply-Chain Evidence
+
+EHS:
+Gas / spill / PPE / nanoparticle / waste / emission event
+  ↓
+EHS severity
+  ↓
+HIGH / CRITICAL
+  ↓
+Response recommendation
+  ↓
+EHS Evidence
+
+CYBERSECURITY:
+Controlled industrial PCAP
+  ↓
+Suricata
+  ↓
+Detection rule match
+  ↓
+Security Finding
+  ↓
+Security Evidence
+
+DEVSECOPS:
+Repository
+  ↓
+Bandit / Semgrep / Trivy
+  ↓
+Scan Results
+  ↓
+Security Scan Evidence
+
+AI / ML:
+Cleanroom / environmental telemetry
+  ↓
+ML / TensorFlow / Edge AI analysis
+  ↓
+Normal / anomaly / severity
+  ↓
+AI / Incident Evidence
+========================================================================================================================
+IMPLEMENTATION BOUNDARY
+[IMPLEMENTED]
+• Edge Gateway validation and enrichment
+• Raw / validated MQTT security boundary
+• scikit-learn IsolationForest anomaly detection
+• Custom rule-based Edge AI
+• TensorFlow/Keras autoencoder
+• OPC-UA process validation
+• Modbus / PLC validation
+• SHA-256 recipe integrity verification
+• Supplier validation
+• Material risk scoring
+• Certificate / quality / export / country-risk evaluation
+• Hash-chained supply-chain ledger
+• Ledger verification
+• EHS incident detection
+• Worker-safety decision logic
+• Suricata controlled IDS demonstration
+• Bandit
+• Semgrep
+• Trivy
+• Incident Manager
+• Audit Logger
+• Compliance Report Generator
+
+[SIMULATED / CONTROLLED INPUTS]
+• Physical cleanroom sensors
+• Physical semiconductor manufacturing machines
+• Physical PLC hardware
+• Physical worker-safety instrumentation
+• Real industrial process equipment
+• Real production industrial network traffic
+• Production chemical infrastructure
+
+These are represented by software simulators or controlled demonstration
+data in the educational proof-of-concept.
+========================================================================================================================
+SECURITY ARCHITECTURE LIMITATIONS
+The current repository is an educational proof-of-concept.
+Therefore this A05 diagram does NOT claim:
+• Production-grade OT security
+• Live enterprise SOC/SIEM operation
+• Enterprise SOAR automation
+• Certified safety-instrumented systems
+• Regulatory certification
+• Legal compliance certification
+• Production-grade IAM
+• Enterprise secrets management
+• High-availability security infrastructure
+• Continuous live network IDS deployment
+• Physical industrial safety certification
+
+The project demonstrates executable security controls, validation,
+risk assessment, anomaly detection, traceability, incident evidence,
+audit recording and compliance-oriented reporting using controlled
+laboratory software and simulated/controlled inputs.
+========================================================================================================================
+A05 SCOPE / RELATION TO THE OTHER ARCHITECTURE DIAGRAMS
+A01 — SYSTEM ARCHITECTURE
+Answers:
+"What are the major functional components of Topic 127?"
+
+A02 — NETWORK / DEPLOYMENT ARCHITECTURE
+Answers:
+"Where do those components run, what networks do they use,
+and which interfaces/ports connect them?"
+
+A03 — DATA FLOW
+Answers:
+"How does telemetry, process information and evidence move
+through the implemented system?"
+
+A04 — PROCESS / OPERATIONAL WORKFLOWS
+Answers:
+"How do the operational business and manufacturing processes execute?"
+
+A05 — SECURITY ARCHITECTURE & TRUST BOUNDARIES
+Answers:
+"Where are the security controls, how are risks and security events
+detected or validated, how are response actions determined, and how is
+evidence captured and governed?"
+
+A06 — CLOUD / HYBRID / TARGET ARCHITECTURE
+Answers:
+"How does the current educational EC2 deployment relate to a future
+enterprise / hybrid production architecture?"
+
+A05 intentionally does not replace A02 network topology.
+A02 remains authoritative for:
+• deployment placement
+• EC2
+• Docker networking
+• ports
+• network interfaces
+• service connectivity
+
+A05 remains authoritative for:
+• security-control placement
+• trust boundaries
+• integrity controls
+• process-security validation
+• safety controls
+• supply-chain security
+• IDS demonstration
+• DevSecOps controls
+• audit / evidence / governance flow
+========================================================================================================================
+LEGEND
+OT          = Operational Technology
+OOS         = Out-of-Specification
+EHS         = Environmental Health and Safety
+QMS         = Quality Management System
+IDS         = Intrusion Detection System
+AI / ML     = Artificial Intelligence / Machine Learning
+DevSecOps   = Development Security + Operations
+SHA-256     = Cryptographic hash used for integrity verification
+Trust Boundary = Logical separation of security/control responsibilities
+Evidence    = CSV / JSON / Markdown / text output
+SIMULATED   = Software-generated / controlled laboratory input
+IMPLEMENTED = Executable repository capability
+RECOMMENDED = Implemented response recommendation, not necessarily
+              an automatically enforced control
+↓           = Processing / control / decision flow
+►           = Directional relationship
+========================================================================================================================
+FINAL ARCHITECTURAL STATEMENT
+The Topic 127 security architecture is implemented as a collection of
+independent security, safety, integrity and governance controls:
+
+Process Security
++
+Recipe Integrity
++
+Supply Chain Security
++
+EHS / Worker Safety
++
+AI / ML Anomaly Detection
++
+Industrial IDS Demonstration
++
+DevSecOps
++
+Incident / Audit / Compliance Evidence
+↓
+Security / Safety Findings
+↓
+Risk / Severity / Verification
+↓
+Recommended or demonstrated response
+↓
+Evidence
+↓
+Audit / Compliance Reporting
+
+The architecture deliberately distinguishes:
+• EXECUTABLE IMPLEMENTED CONTROLS
+• SIMULATED / CONTROLLED INPUTS
+• LOGICAL GOVERNANCE RELATIONSHIPS
+• RECOMMENDED RESPONSE ACTIONS
+• FUTURE PRODUCTION CAPABILITIES NOT CLAIMED
+
+This A05 reflects the CURRENT EDUCATIONAL IMPLEMENTATION of
+exam-final-repo and is designed to remain consistent with the repository's
+actual source code, configuration, scripts and evidence outputs.
+========================================================================================================================
