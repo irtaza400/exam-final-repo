@@ -1,0 +1,947 @@
+A03 — Topic 127 Data Flow Architecture
+========================================================================================================================
+                     TOPIC 127 — DATA FLOW ARCHITECTURE
+  Telemetry • Validation • Analytics • Process Data • Supply Chain • EHS • Security • Evidence • Reporting
+========================================================================================================================
+
+IMPORTANT ARCHITECTURE RULE
+A03 shows the FLOW OF DATA / INFORMATION.
+A01 = functional components
+A02 = deployment / network placement
+A03 = data movement, transformation, storage and evidence generation
+A04 = operational process / workflow logic
+A05 = security controls and trust boundaries
+A06 = current-to-target cloud / hybrid architecture
+A03 deliberately avoids pretending that independently implemented
+demonstration modules are one continuous production data pipeline.
+========================================================================================================================
+
+1. PRIMARY CLEANROOM TELEMETRY DATA FLOW
+========================================================================================================================
+           ┌─────────────────────────────────────────────┐
+           │        CLEANROOM SENSOR SIMULATOR           │
+           │                                             │
+           │ Machine mappings:                           │
+           │ • EQP-100 → Lithography                     │
+           │ • EQP-200 → Deposition                      │
+           │ • EQP-300 → Etching                         │
+           │                                             │
+           │ Generated telemetry:                        │
+           │ • timestamp                                 │
+           │ • machine_id                                │
+           │ • zone                                      │
+           │ • process                                   │
+           │ • event_status                              │
+           │ • particle_count                            │
+           │ • temperature                               │
+           │ • humidity                                  │
+           │ • airflow                                   │
+           │ • gas_ppm                                   │
+           │ • ppe_compliant                             │
+           └──────────────────────┬──────────────────────┘
+                                  │
+                                  │ JSON telemetry
+                                  │ approximately every 2 sec
+                                  ▼
+                    topic127/raw/cleanroom
+                                  │
+                                  ▼
+                       ┌────────────────────┐
+                       │ MOSQUITTO MQTT     │
+                       │ BROKER             │
+                       │                    │
+                       │ Publish / Subscribe│
+                       └─────────┬──────────┘
+                                 │
+                  ┌──────────────┴──────────────┐
+                  │                             │
+                  ▼                             ▼
+========================================================================================================================
+2A. RAW MQTT → INFLUXDB → GRAFANA
+             ┌────────────────────────────────────────────┐
+             │ MQTT → INFLUXDB INGESTION SERVICE          │
+             │                                            │
+             │ Input topic:                               │
+             │ topic127/raw/cleanroom                     │
+             │                                            │
+             │ Extracts / converts:                       │
+             │ • zone                                     │
+             │ • machine_id                               │
+             │ • process                                  │
+             │ • particle_count                           │
+             │ • temperature                              │
+             │ • humidity                                 │
+             │ • airflow                                  │
+             │ • gas_ppm                                  │
+             │ • ppe_compliant                            │
+             └──────────────────────┬─────────────────────┘
+                                    │
+                                    │ InfluxDB Point
+                                    │ measurement:
+                                    │ cleanroom_monitoring
+                                    ▼
+                          ┌────────────────────────┐
+                          │       INFLUXDB         │
+                          │                        │
+                          │ Time-series storage    │
+                          │ bucket: cleanroom      │
+                          │                        │
+                          │ Tags:                  │
+                          │ • zone                 │
+                          │ • machine_id           │
+                          │ • process              │
+                          │                        │
+                          │ Fields:                │
+                          │ • particle_count       │
+                          │ • temperature          │
+                          │ • humidity             │
+                          │ • airflow              │
+                          │ • gas_ppm              │
+                          │ • ppe_compliant        │
+                          └────────────┬───────────┘
+                                       │
+                                       │ Query / visualization
+                                       ▼
+                          ┌────────────────────────┐
+                          │        GRAFANA         │
+                          │                        │
+                          │ Cleanroom telemetry    │
+                          │ Environmental trends   │
+                          │ Monitoring             │
+                          │ Dashboard evidence     │
+                          └────────────────────────┘
+
+IMPORTANT:
+The repository's MQTT-to-InfluxDB service subscribes directly to the
+RAW MQTT topic. It does not wait for Edge Gateway validation.
+========================================================================================================================
+2B. RAW MQTT → EDGE GATEWAY → VALIDATED / REJECTED / STATUS
+                 topic127/raw/cleanroom
+                           │
+                           ▼
+            ┌────────────────────────────────┐
+            │          EDGE GATEWAY          │
+            │                                │
+            │ Required-field validation      │
+            │ String-field validation        │
+            │ Event-status validation        │
+            │ Numeric-range validation       │
+            │ PPE boolean validation         │
+            │                                │
+            │ Enrichment:                    │
+            │ • gateway_id                   │
+            │ • gateway_received_at          │
+            │ • schema_valid                 │
+            │ • data_quality                 │
+            │ • processing_latency_ms        │
+            └───────────────┬────────────────┘
+                            │
+               ┌────────────┼───────────────┐
+               │            │               │
+               │ valid      │ invalid       │ operational status
+               ▼            ▼               ▼
+  topic127/edge/validated  topic127/edge/rejected  topic127/edge/status
+               │
+               │
+               ▼
+      validated telemetry stream
+
+DATA SEMANTICS:
+• validated = accepted telemetry with gateway enrichment
+• rejected = validation failure with rejection reason and original payload
+• status = gateway operational status message
+========================================================================================================================
+2C. VALIDATED MQTT → CUSTOM EDGE AI
+             topic127/edge/validated
+                        │
+                        ▼
+           ┌────────────────────────────┐
+           │      CUSTOM EDGE AI        │
+           │          ENGINE            │
+           │                            │
+           │ Mode: custom-rule-based    │
+           │                            │
+           │ Calculates:                │
+           │ • metric risk              │
+           │ • weighted risk score      │
+           │ • abnormal metrics         │
+           │ • severity                 │
+           │ • recommendations          │
+           └─────────────┬──────────────┘
+                         │
+              ┌──────────┴───────────┐
+              │                      │
+              ▼                      ▼
+   topic127/edge/ai/result   topic127/edge/ai/alert
+              │                      │
+              │ all inference        │ anomaly only
+              │ results              │
+              │                      │
+              └──────────┬───────────┘
+                         │
+                         ▼
+                AI result / alert data
+
+IMPORTANT:
+The custom Edge AI engine is rule-based inference.
+It is not represented as the repository's trained ML model.
+========================================================================================================================
+3. PARALLEL ML / DEEP-LEARNING DATA FLOWS
+IMPORTANT:
+The following are separate executable demonstration workflows.
+They are intentionally NOT drawn as:
+InfluxDB → ML  or  MQTT → TensorFlow
+because the current implementation does not establish those direct runtime connections.
+
+3A. SCIKIT-LEARN ISOLATIONFOREST FLOW
+   ┌───────────────────────────────────┐
+   │ ML DEMONSTRATION DATA             │
+   │                                   │
+   │ Internally generated normal       │
+   │ baseline + demo events            │
+   │                                   │
+   │ Features:                         │
+   │ • particle_count                  │
+   │ • temperature                     │
+   │ • humidity                        │
+   │ • airflow                         │
+   │ • gas_ppm                         │
+   └──────────────────┬────────────────┘
+                      │
+                      ▼
+            ┌──────────────────────┐
+            │ scikit-learn         │
+            │ IsolationForest      │
+            └───────────┬──────────┘
+                        │
+                        ▼
+               ML anomaly decision
+                        │
+                        ▼
+            ┌──────────────────────┐
+            │ Rule-based           │
+            │ explanation +        │
+            │ remediation logic    │
+            └───────────┬──────────┘
+                        │
+                        ▼
+             reports/incidents.csv
+             reports/incidents.jsonl
+
+The ML module trains its model on internally generated cleanroom baseline
+data and evaluates its own demonstration events.
+
+3B. TENSORFLOW / KERAS AUTOENCODER FLOW
+   ┌───────────────────────────────────┐
+   │ NORMAL CLEANROOM TRAINING DATA    │
+   │                                   │
+   │ • particle_count                  │
+   │ • temperature                     │
+   │ • humidity                        │
+   │ • airflow                         │
+   │ • gas_ppm                         │
+   │ • ppe_compliant                   │
+   └──────────────────┬────────────────┘
+                      │
+                      ▼
+            ┌──────────────────────┐
+            │ TensorFlow / Keras   │
+            │ Autoencoder          │
+            └───────────┬──────────┘
+                        │
+                        ▼
+               Reconstruction error
+                        │
+                        ▼
+                 95th-percentile
+                    threshold
+                        │
+                        ▼
+            ┌──────────────────────┐
+            │ Normal / Anomaly     │
+            │ Severity             │
+            │ Recommended action   │
+            └───────────┬──────────┘
+                        │
+                        ▼
+     reports/tensorflow_anomaly_incidents.csv
+========================================================================================================================
+4A. OPC-UA PROCESS DATA FLOW
+     ┌────────────────────────────────────────┐
+     │ OPC-UA PROCESS SIMULATOR               │
+     │                                        │
+     │ src/opcua_server.py                    │
+     │                                        │
+     │ Generates:                             │
+     │ • RecipeID                             │
+     │ • ProcessName                          │
+     │ • TemperatureSetpoint                  │
+     │ • PressureSetpoint                     │
+     │ • EtchTimeSeconds                      │
+     │ • MachineStatus                        │
+     │ • SecurityState                        │
+     └────────────────────┬───────────────────┘
+                          │
+                          ▼
+                OPC-UA SERVER :4840
+                          │
+                          │ OPC-UA values
+                          ▼
+          ┌──────────────────────────────┐
+          │ OPC-UA CLIENT VALIDATOR      │
+          │                              │
+          │ Checks:                      │
+          │ • recipe ID                  │
+          │ • process name               │
+          │ • temperature                │
+          │ • pressure                   │
+          │ • etch time                  │
+          │ • security state             │
+          └───────────────┬──────────────┘
+                          │
+                          ▼
+             Process security finding
+                          │
+                          ▼
+    reports/process_security_incidents.csv
+========================================================================================================================
+4B. MODBUS / PLC DATA FLOW
+     ┌────────────────────────────────────────┐
+     │ MODBUS PLC / REGISTER SIMULATOR        │
+     │                                        │
+     │ src/modbus_server.py                   │
+     │                                        │
+     │ Holding registers:                     │
+     │ • motor speed                          │
+     │ • valve status                         │
+     │ • chamber pressure                     │
+     │ • alarm code                           │
+     │ • recipe lock                          │
+     └────────────────────┬───────────────────┘
+                          │
+                          ▼
+                 MODBUS SERVER :5020
+                          │
+                          │ Modbus registers
+                          ▼
+          ┌──────────────────────────────┐
+          │ MODBUS CLIENT VALIDATOR      │
+          │                              │
+          │ Checks:                      │
+          │ • motor speed                │
+          │ • chamber pressure           │
+          │ • alarm code                 │
+          │ • recipe lock                │
+          └───────────────┬──────────────┘
+                          │
+                          ▼
+               Modbus security finding
+                          │
+                          ▼
+    reports/modbus_security_incidents.csv
+
+IMPORTANT:
+OPC-UA and Modbus are represented as separate simulator/service paths.
+The repository does not implement one common industrial simulator feeding
+both protocols.
+========================================================================================================================
+5. OPC-UA → FUXA HMI DATA FLOW
+                OPC-UA PROCESS VARIABLES
+                          │
+                          ▼
+          ┌────────────────────────────────┐
+          │ FUXA OPC-UA DEVICE / TAG CONFIG│
+          │                                │
+          │ Configured OPC-UA tags include │
+          │ • RecipeID                     │
+          │ • ProcessName                  │
+          │ • TemperatureSetpoint          │
+          │ • PressureSetpoint             │
+          │ • EtchTimeSeconds              │
+          │ • MachineStatus                │
+          │ • SecurityState                │
+          │ • status/security numeric codes│
+          └───────────────┬────────────────┘
+                          │
+                          ▼
+                 ┌────────────────────┐
+                 │      FUXA HMI      │
+                 │                    │
+                 │ HMI / SCADA-style  │
+                 │ operational view   │
+                 └────────────────────┘
+
+IMPORTANT:
+The repository configures FUXA with OPC-UA tag addresses.
+A03 therefore represents the operational HMI path as:
+OPC-UA variables → FUXA-configured tags → visualization.
+========================================================================================================================
+6. RECIPE INTEGRITY DATA FLOW
+           ┌─────────────────────────────────┐
+           │ APPROVED RECIPE                 │
+           │                                 │
+           │ data/approved_recipe.json       │
+           └───────────────┬─────────────────┘
+                           │
+                           │ file contents
+                           ▼
+                  ┌───────────────────┐
+                  │ SHA-256 CALCULATOR│
+                  └─────────┬─────────┘
+                            │
+                            ▼
+                     CURRENT HASH
+                            │
+                            │ comparison
+                            ▼
+                  ┌───────────────────┐
+                  │ RECIPE INTEGRITY  │
+                  │ CHECK             │
+                  └─────────┬─────────┘
+                            │
+           ┌────────────────┘
+           │
+           │ approved reference
+           ▼
+  ┌────────────────────────────────┐
+  │ APPROVED HASH                  │
+  │                                │
+  │ data/approved_recipe.sha256    │
+  └────────────────────────────────┘
+
+                     CHECK RESULT
+                     /          \
+                    /            \
+                   ▼              ▼
+             HASH MATCH       HASH MISMATCH
+                   │                │
+                   ▼                ▼
+         Integrity verified       CRITICAL
+                                  tamper finding
+                                      │
+                                      ▼
+                      reports/recipe_tamper_incidents.csv
+
+IMPORTANT:
+The .sha256 file is the stored approved reference hash.
+The checker calculates the current hash from approved_recipe.json
+and compares the two values.
+========================================================================================================================
+7. SUPPLY-CHAIN DATA FLOW
+      ┌──────────────────────────────────┐
+      │ APPROVED SUPPLIER REGISTRY       │
+      │                                  │
+      │ config/approved_suppliers.json   │
+      └───────────────┬──────────────────┘
+                      │
+                      │ supplier identity / status
+                      ▼
+      ┌──────────────────────────────────┐
+      │ MATERIAL BATCH DATA              │
+      │                                  │
+      │ data/material_batches.json       │
+      │                                  │
+      │ batch / lot / material /         │
+      │ certificate / quality / export   │
+      └───────────────┬──────────────────┘
+                      │
+                      │ batch + supplier context
+                      ▼
+      ┌──────────────────────────────────┐
+      │ SUPPLIER VALIDATOR               │
+      │                                  │
+      │ • supplier exists                │
+      │ • supplier ACTIVE                │
+      │ • material approved              │
+      └───────────────┬──────────────────┘
+                      │
+                      │ validation result
+                      ▼
+      ┌──────────────────────────────────┐
+      │ MATERIAL RISK ENGINE             │
+      │                                  │
+      │ • certificate status             │
+      │ • quality status                 │
+      │ • export / dual-use risk         │
+      │ • country risk                   │
+      │ • configured risk weights        │
+      └───────────────┬──────────────────┘
+                      │
+                      │ risk score
+                      ▼
+      ┌──────────────────────────────────┐
+      │ RISK / QMS DECISION              │
+      │                                  │
+      │ 0–39   → APPROVE_FOR_USE         │
+      │ 40–69  → QUARANTINE_AND_QMS_REVIEW│
+      │ 70–100 → REJECT_OR_LEGAL_REVIEW  │
+      └───────────────┬──────────────────┘
+                      │
+                      ▼
+      ┌──────────────────────────────────┐
+      │ SUPPLY-CHAIN LEDGER              │
+      │                                  │
+      │ Hash-chained records             │
+      │ • previous_hash                  │
+      │ • current_hash                   │
+      │ • supplier / batch metadata      │
+      │ • risk score / decision          │
+      └───────────────┬──────────────────┘
+                      │
+           ┌──────────┴─────────────────────────────┐
+           │                                        │
+           ▼                                        ▼
+reports/supply_chain_ledger.json       reports/supply_chain_risk_report.csv
+           │
+           │ verification
+           ▼
+┌──────────────────────────────┐
+│ LEDGER VERIFIER              │
+│                              │
+│ • index continuity           │
+│ • previous-hash continuity   │
+│ • current-hash recalculation │
+└──────────────┬───────────────┘
+               │
+               ▼
+reports/ledger_verification_report.json
+
+ADDITIONAL SUPPLY-CHAIN OUTPUT:
+reports/supply_chain_validation_report.json
+
+IMPORTANT:
+The ledger is an educational single-node hash-chain implementation.
+It is not drawn as a distributed blockchain network.
+========================================================================================================================
+8. EHS / WORKER-SAFETY DATA FLOW
+          ┌─────────────────────────────────────┐
+          │ EHS EVENT DATA                      │
+          │                                     │
+          │ data/ehs_events.json                │
+          │                                     │
+          │ • gas_ppm                           │
+          │ • ppe_compliant                     │
+          │ • spill_detected                    │
+          │ • nanoparticle_exposure             │
+          │ • waste_container_full              │
+          │ • emission_ppm                      │
+          └───────────────────┬─────────────────┘
+                              │
+                              ▼
+               ┌────────────────────────────┐
+               │ EHS INCIDENT ENGINE        │
+               └──────────────┬─────────────┘
+                              │
+                              ▼
+               ┌────────────────────────────┐
+               │ INCIDENT CLASSIFICATION    │
+               │                            │
+               │ NORMAL                     │
+               │ HIGH                       │
+               │ CRITICAL                   │
+               └──────────────┬─────────────┘
+                              │
+                   ┌──────────┴──────────┐
+                   │                     │
+                   ▼                     ▼
+                 HIGH                 CRITICAL
+                   │                     │
+                   │                     ├── Evacuate zone
+                   │                     ├── Isolate process
+                   │                     └── Notify EHS team
+                   │
+                   ▼
+              EHS incident
+                   │
+                   ▼
+         reports/ehs_incidents.csv
+========================================================================================================================
+9. CYBERSECURITY / SURICATA DATA FLOW
+          ┌────────────────────────────────────┐
+          │ CONTROLLED SECURITY TEST INPUT     │
+          │                                    │
+          │ Educational / supplied PCAP data   │
+          │ topic127_industrial_ids_test       │
+          └────────────────────┬───────────────┘
+                               │
+                               ▼
+          ┌────────────────────────────────────┐
+          │ SURICATA                           │
+          │                                    │
+          │ Optional security-demo profile     │
+          │ Offline / controlled PCAP analysis │
+          └────────────────────┬───────────────┘
+                               │
+                               ▼
+                       RULE MATCH / ALERT
+                               │
+             ┌─────────────────┼─────────────────┐
+             │                 │                 │
+             ▼                 ▼                 ▼
+          OPC-UA             MQTT             FUXA/HMI
+          :4840              :1883             :1881
+             │                 │                 │
+             └─────────────────┼─────────────────┘
+                               │
+                               ▼
+                       Security finding
+                               │
+                               ▼
+                      Suricata evidence
+
+Implemented detection concepts include:
+• unauthorized OPC-UA access attempt
+• suspicious MQTT command payload
+• suspicious HMI/FUXA access attempt
+
+NOTE:
+This is controlled demonstration data, not continuous live production
+IDS telemetry.
+========================================================================================================================
+10. DEVSECOPS DATA FLOW
+                 ┌─────────────────────────────┐
+                 │      TOPIC 127 REPOSITORY   │
+                 │                             │
+                 │ source / configuration /    │
+                 │ project files               │
+                 └─────────────┬───────────────┘
+                               │
+                               ▼
+                 ┌─────────────────────────────┐
+                 │      DEVSECOPS SCANNER      │
+                 └─────────────┬───────────────┘
+                               │
+          ┌────────────────────┼────────────────────┐
+          │                    │                    │
+          ▼                    ▼                    ▼
+       BANDIT               SEMGREP               TRIVY
+          │                    │                    │
+          │ src scan           │ src scan           │ filesystem scan
+          │                    │                    │
+          └────────────────────┼────────────────────┘
+                               │
+                               ▼
+                 ┌─────────────────────────────┐
+                 │ SECURITY SCAN OUTPUT        │
+                 │                             │
+                 │ Tool output / findings      │
+                 │ Exit codes                  │
+                 └─────────────┬───────────────┘
+                               │
+                               ▼
+                reports/security_scan_report.txt
+========================================================================================================================
+11. INCIDENT AGGREGATION DATA FLOW
+                            CONFIGURED INCIDENT SOURCES
+                                         │
+      ┌──────────────────────────────────┼──────────────────────────────────┐
+      │                                  │                                  │
+      ▼                                  ▼                                  ▼
+reports/incidents.csv  reports/process_security_incidents.csv  reports/modbus_security_incidents.csv
+      │                                  │                                  │
+      └──────────────────────────────────┼──────────────────────────────────┘
+                                         │
+      ┌──────────────────────────────────┴──────────────────────────────────┐
+      │                                                                     │
+      ▼                                                                     ▼
+reports/recipe_tamper_incidents.csv                       reports/ehs_incidents.csv
+      │                                                                     │
+      └──────────────────────────────────┬──────────────────────────────────┘
+                                         │
+                                         ▼
+                            ┌──────────────────────────┐
+                            │ INCIDENT MANAGER         │
+                            │                          │
+                            │ Reads only configured    │
+                            │ operational incident     │
+                            │ CSV sources              │
+                            │                          │
+                            │ • source identification  │
+                            │ • severity classification│
+                            │ • aggregation            │
+                            └────────────┬─────────────┘
+                                         │
+                                         ▼
+                            reports/incident_summary.csv
+
+IMPORTANT:
+The Incident Manager aggregates the configured operational incident CSVs.
+It does NOT currently consume every evidence artifact in the repository.
+
+Not directly aggregated here:
+• supply-chain ledger / risk reports
+• TensorFlow anomaly report
+• DevSecOps security scan report
+• audit log
+• compliance report
+========================================================================================================================
+12. AUDIT DATA FLOW
+          DEMONSTRATION OPERATIONAL / CONTROL EVENTS
+                           │
+          ┌────────────────┼──────────────────┐
+          │                │                  │
+          ▼                ▼                  ▼
+    Dashboard View   Recipe Validation   Security Scan
+          │                │                  │
+          └────────────────┼──────────────────┘
+                           │
+                           ▼
+                   ┌────────────────┐
+                   │  AUDIT LOGGER  │
+                   └───────┬────────┘
+                           │
+                           ▼
+                  reports/audit_log.csv
+
+The demonstration event set also contains:
+• EHS incident creation
+• supply-chain batch verification
+
+NOTE:
+The current audit logger records demonstration operational/control events.
+It is not represented as a live enterprise SIEM, SOAR or universal event bus.
+========================================================================================================================
+13. COMPLIANCE REPORTING DATA FLOW
+                        COMPLIANCE INPUT FILES / STATUS
+                                         │
+   ┌─────────────────────────────────────┼─────────────────────────────────────┐
+   │                                     │                                     │
+   ▼                                     ▼                                     ▼
+reports/incidents.csv  reports/process_security_incidents.csv  reports/modbus_security_incidents.csv
+   │                                     │                                     │
+   └─────────────────────────────────────┼─────────────────────────────────────┘
+                                         │
+   ┌───────────────────────┬─────────────┴─────────┬───────────────────────────┐
+   │                       │                       │                           │
+   ▼                       ▼                       ▼                           ▼
+reports/recipe_tamper_  reports/supply_chain_   reports/supply_chain_       reports/ehs_incidents.csv
+incidents.csv           ledger.json             risk_report.csv
+   │                       │                       │                           │
+   └───────────────────────┴─────────────┬─────────┴───────────────────────────┘
+                                         │
+                                         ▼
+                          ┌───────────────────────────┐
+                          │ COMPLIANCE REPORT         │
+                          │ GENERATOR                 │
+                          │                           │
+                          │ Evidence/status mapping   │
+                          │ Report generation         │
+                          └────────────┬──────────────┘
+                                       │
+                                       ▼
+                         reports/compliance_report.md
+
+IMPORTANT:
+The current Compliance Report Generator explicitly uses these seven evidence inputs:
+• reports/incidents.csv
+• reports/process_security_incidents.csv
+• reports/modbus_security_incidents.csv
+• reports/recipe_tamper_incidents.csv
+• reports/supply_chain_ledger.json
+• reports/supply_chain_risk_report.csv
+• reports/ehs_incidents.csv
+
+The generator maps evidence/status to themes including:
+• ISO 14644-style cleanroom monitoring
+• ISO 14001-style environmental management
+• OSHA / worker-safety-style evidence
+• EPA-style environmental reporting
+• IEC 62443 / ICS security
+• Supply-chain security
+
+It does not calculate formal regulatory certification.
+========================================================================================================================
+14. FINAL PROJECT REPORT DATA FLOW
+                        PROJECT EVIDENCE / REPORT SET
+                                     │
+     ┌───────────────────────────────┼───────────────────────────────┐
+     │                               │                               │
+     ▼                               ▼                               ▼
+Incident evidence           Supply-chain evidence           Compliance evidence
+     │                               │                               │
+     ├───────────────────────────────┼───────────────────────────────┤
+     │                               │                               │
+     ▼                               ▼                               ▼
+Security scan evidence       Ledger status / tamper          Audit log evidence
+                             & restored evidence
+     │                               │                               │
+     └───────────────────────────────┼───────────────────────────────┘
+                                     │
+                                     ▼
+                       ┌────────────────────────────┐
+                       │ FINAL REPORT GENERATOR     │
+                       │                            │
+                       │ Checks evidence presence   │
+                       │ and consumes ledger-status │
+                       │ data where available       │
+                       └─────────────┬──────────────┘
+                                     │
+                                     ▼
+                       reports/final_project_report.md
+
+The Final Report Generator also checks/references the broader project evidence set, including:
+• dashboard healthcheck
+• incident summary
+• security scan report
+• compliance report
+• audit log
+• supply-chain ledger/status evidence
+• ledger verification outputs
+
+IMPORTANT:
+The final reporting layer is an evidence/report consolidation mechanism,
+not a universal real-time data bus.
+========================================================================================================================
+15. COMPLETE DATA / GOVERNANCE FLOW
+A. LIVE CLEANROOM TELEMETRY
+Cleanroom Sensor Simulator
+↓
+topic127/raw/cleanroom
+↓
+Mosquitto
+│
+├──────────────────────────────► MQTT → InfluxDB
+│                                   ↓
+│                                InfluxDB
+│                                   ↓
+│                                Grafana
+│
+└──────────────────────────────► Edge Gateway
+                                    │
+               ┌────────────────────┼────────────────────┐
+               ▼                    ▼                    ▼
+           validated             rejected              status
+               │                    │                    │
+               ▼                    ▼                    ▼
+     topic127/edge/validated
+               │
+               ▼
+            Edge AI
+              / \
+             /   \
+            ▼     ▼
+     AI Result   AI Alert
+
+B. INDUSTRIAL PROCESS DATA
+OPC-UA Process Simulator ──► OPC-UA Server :4840 ──► OPC-UA Validator ──► Process Security Evidence
+Modbus PLC Simulator    ──► Modbus Server :5020 ──► Modbus Validator ──► Modbus Security Evidence
+
+C. PROCESS INTEGRITY
+Approved Recipe ──► Current SHA-256 + Approved SHA-256 ──► Recipe Integrity Check ──► Tamper Evidence
+
+D. SUPPLY-CHAIN DATA
+Supplier Registry + Batch Data ──► Supplier Validation ──► Risk Engine ──► Hash Ledger ──► Ledger Verifier
+
+E. EHS DATA
+EHS Event JSON ──► EHS Incident Engine ──► Severity / Response ──► EHS Evidence
+
+F. CYBERSECURITY
+Controlled PCAP ──► Suricata ──► Rule Match / Alert ──► Security Evidence
+
+G. DEVSECOPS
+Repository ──► Bandit / Semgrep / Trivy ──► Security Scan Evidence
+========================================================================================================================
+16. GOVERNANCE / REPORTING PATHS
+PATH 1 — INCIDENT AGGREGATION
+Configured Operational Incident CSVs ──► Incident Manager ──► reports/incident_summary.csv
+
+Configured source files:
+• reports/incidents.csv
+• reports/process_security_incidents.csv
+• reports/modbus_security_incidents.csv
+• reports/recipe_tamper_incidents.csv
+• reports/ehs_incidents.csv
+
+PATH 2 — AUDIT LOGGING
+Demonstration Operational / Control Events ──► Audit Logger ──► reports/audit_log.csv
+
+PATH 3 — COMPLIANCE REPORTING
+Defined Compliance Evidence / Status ──► Compliance Report Generator ──► reports/compliance_report.md
+
+Compliance inputs:
+• reports/incidents.csv
+• reports/process_security_incidents.csv
+• reports/modbus_security_incidents.csv
+• reports/recipe_tamper_incidents.csv
+• reports/supply_chain_ledger.json
+• reports/supply_chain_risk_report.csv
+• reports/ehs_incidents.csv
+
+PATH 4 — FINAL PROJECT REPORT
+Broader Project Evidence / Report Set ──► Final Report Generator ──► reports/final_project_report.md
+
+IMPORTANT:
+These four paths are separate implemented reporting mechanisms.
+They are NOT represented as "all evidence → one universal evidence bus".
+========================================================================================================================
+17. DATA OBJECT / STORAGE MAP
+DATA / MESSAGE OBJECT                     OUTPUT / DESTINATION
+topic127/raw/cleanroom                    Raw MQTT telemetry
+topic127/edge/validated                   Validated telemetry
+topic127/edge/rejected                    Rejected telemetry
+topic127/edge/status                      Gateway status
+topic127/edge/ai/result                   Edge AI result
+topic127/edge/ai/alert                    Edge AI anomaly alert
+cleanroom_monitoring                      InfluxDB measurement
+Grafana                                   Visualization
+reports/incidents.csv                     scikit-learn ML incidents
+reports/incidents.jsonl                   ML incident detail
+reports/tensorflow_anomaly_incidents.csv  TensorFlow/Keras evidence
+reports/process_security_incidents.csv    OPC-UA findings
+reports/modbus_security_incidents.csv     Modbus findings
+reports/recipe_tamper_incidents.csv       Recipe integrity findings
+reports/supply_chain_ledger.json          Supply-chain ledger
+reports/supply_chain_validation_report.json Supply-chain validation
+reports/supply_chain_risk_report.csv      Risk evidence
+reports/ledger_verification_report.json   Ledger verification
+reports/ehs_incidents.csv                 EHS findings
+Suricata output / logs                    Controlled IDS evidence
+reports/security_scan_report.txt          DevSecOps scan output
+reports/incident_summary.csv              Incident aggregation
+reports/audit_log.csv                     Demonstration audit events
+reports/compliance_report.md              Compliance evidence mapping
+reports/final_project_report.md           Final evidence/report
+========================================================================================================================
+18. DATA FLOW LIMITATIONS / ACCURACY NOTES
+• Mosquitto is a publish/subscribe broker, not a sequential processing step.
+• MQTT-to-InfluxDB ingestion subscribes directly to: topic127/raw/cleanroom
+• Edge Gateway independently subscribes to: topic127/raw/cleanroom
+• Edge Gateway publishes: topic127/edge/validated, topic127/edge/rejected, topic127/edge/status
+• Custom Edge AI consumes: topic127/edge/validated
+• Custom Edge AI publishes: topic127/edge/ai/result, topic127/edge/ai/alert
+• scikit-learn and TensorFlow/Keras anomaly workflows are separate demonstration paths.
+• OPC-UA and Modbus are separate server/validator paths.
+• Recipe integrity compares a calculated current SHA-256 with the stored approved hash.
+• Supply-chain processing uses supplier validation, risk evaluation, ledger creation, and independent chain verification.
+• Incident Manager aggregates a fixed set of operational incident CSVs; it is not a universal evidence bus.
+• Audit Logger is a standalone demonstration logger.
+• Compliance Generator maps a defined seven-file evidence set to report content; it is not a regulatory certification engine.
+• Final Report Generator consolidates/checks the broader project evidence set and writes final_project_report.md.
+• The supply-chain ledger is a single-node educational hash-chain, not a distributed blockchain network.
+• Physical industrial and cleanroom assets are simulated or represented by controlled demonstration data.
+========================================================================================================================
+19. IMPLEMENTATION BOUNDARY
+[DIRECTLY IMPLEMENTED DATA FLOWS]
+• Sensor simulator → raw MQTT topic
+• Raw MQTT → MQTT-to-InfluxDB ingestion
+• Raw MQTT → Edge Gateway
+• Edge Gateway → validated MQTT
+• Edge Gateway → rejected MQTT
+• Edge Gateway → status MQTT
+• Validated MQTT → Custom Edge AI
+• Edge AI → result MQTT
+• Edge AI → alert MQTT
+• Raw telemetry → InfluxDB → Grafana
+• OPC-UA simulator → OPC-UA server → OPC-UA validator
+• Modbus simulator → Modbus server → Modbus validator
+• Recipe → SHA-256 comparison → tamper report
+• Supplier/material data → validation/risk → ledger
+• Ledger → independent verification
+• EHS JSON → EHS incident engine
+• Controlled PCAP → Suricata
+• Repository → Bandit / Semgrep / Trivy
+• Configured incident CSVs → Incident Manager → incident_summary.csv
+• Operational events → Audit Logger → audit_log.csv
+• Compliance evidence set → Compliance Generator → compliance_report.md
+• Project evidence set → Final Report Generator → final_project_report.md
+========================================================================================================================
