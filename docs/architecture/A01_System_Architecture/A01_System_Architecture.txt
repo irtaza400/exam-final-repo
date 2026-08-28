@@ -1,0 +1,437 @@
+A01 — Topic 127 Final System Architecture Diagram
+========================================================================================================================
+                 TOPIC 127 — ADVANCED NANOTECHNOLOGY MANUFACTURING SECURITY PLATFORM
+      Cleanroom Monitoring • Process Control • Environmental Safety • Supply Chain • Cybersecurity • Compliance
+========================================================================================================================
+
+
+                                             ┌───────────────────────────────────────┐
+                                             │      MANUFACTURING / OT ENVIRONMENT   │
+                                             │                                       │
+                                             │  Cleanroom + Industrial Processes     │
+                                             └───────────────────┬───────────────────┘
+                                                                 │
+                         ┌───────────────────────────────────────┴───────────────────────────────────────┐
+                         │                                                                               │
+                         ▼                                                                               ▼
+             ┌──────────────────────────┐                                             ┌──────────────────────────┐
+             │ CLEANROOM SENSORS /      │                                             │ INDUSTRIAL PROCESS       │
+             │ SIMULATORS               │                                             │ SIMULATORS               │
+             │                          │                                             │                          │
+             │ • Particle Count         │                                             │ • Nanolithography        │
+             │ • Temperature            │                                             │ • Deposition             │
+             │ • Humidity               │                                             │ • Etching                │
+             │ • Airflow                │                                             │ • Process Parameters     │
+             │ • Gas Indicators         │                                             │                          │
+             │ • PPE Status             │                                             │                          │
+             └─────────────┬────────────┘                                             └─────────────┬────────────┘
+                           │                                                                        │
+                           │ Telemetry                                                              │ Process Variables
+                           ▼                                                                        ▼
+             ┌──────────────────────────┐                                             ┌──────────────────────────┐
+             │      EDGE GATEWAY        │                                             │     INDUSTRIAL           │
+             │                          │                                             │    PROTOCOL LAYER        │
+             │ • Validation             │                                             │                          │
+             │ • Enrichment             │                                             │ OPC-UA Server            │
+             │ • Routing                │                                             │ Modbus / PLC Simulator   │
+             └─────────────┬────────────┘                                             └─────────────┬────────────┘
+                           │                                                                        │
+                           │ MQTT Telemetry                                                         │
+                           ▼                                                                        │
+             ┌──────────────────────────┐                                                           │
+             │    MOSQUITTO MQTT        │                                                           │
+             │        BROKER            │                                                           │
+             └─────────────┬────────────┘                                                           │
+                           │                                                                        │
+                           │                                                                        ├───────────────┐
+                           ▼                                                                        ▼               ▼
+             ┌──────────────────────────┐                                             ┌──────────────────┐ ┌──────────────────┐
+             │ PYTHON TELEMETRY         │                                             │ OPC-UA           │ │ MODBUS           │
+             │ INGESTION SERVICE        │                                             │ VALIDATOR        │ │ VALIDATOR        │
+             └─────────────┬────────────┘                                             └────────┬─────────┘ └────────┬─────────┘
+                           │                                                                    │                    │
+                           │ Timestamped Telemetry                                              │ OOS / Security     │ OOS / Security
+                           ▼                                                                    │ Events             │ Events
+             ┌──────────────────────────┐                                                       │                    │
+             │        INFLUXDB          │                                                       └─────────┬──────────┘
+             │    TIME-SERIES DATA      │                                                                 │
+             │         STORAGE          │                                                                 │
+             └────────────┬─────────────┘                                                                 │
+                          │                                                                               │
+                  ┌───────┴───────────────────────┐                                                       │
+                  │                               │                                                       │
+                  │ Cleanroom Features            │ Operational Data                                      │
+                  ▼                               ▼                                                       │
+     ┌─────────────────────────┐       ┌──────────────────────────┐                                       │
+     │   scikit-learn ML       │       │       OPERATIONS         │◄──────────────────────────────────────┘
+     │   ANOMALY ENGINE        │       │      / VISUALIZATION     │
+     │                         │       │                          │
+     │ • Anomaly Detection     │       │  ┌────────────────────┐  │
+     │ • Incident Generation   │       │  │      GRAFANA       │  │
+     └───────────┬─────────────┘       │  │ Monitoring         │  │
+                 │                     │  │ Environmental      │  │
+                 │                     │  │ AI Anomalies       │  │
+                 │                     │  │ Ledger Health      │  │
+                 │                     │  └────────────────────┘  │
+                 │                     │                          │
+                 │                     │  ┌────────────────────┐  │
+                 │                     │  │       FUXA         │  │
+                 │                     │  │ HMI / SCADA-Style  │  │
+                 │                     │  │ Operational View   │  │
+                 │                     │  │ Process Status     │  │
+                 │                     │  └────────────────────┘  │
+                 │                     └──────────────────────────┘
+                 │
+                 │
+                 ├───────────────────────────────────────────────┐
+                 │                                               │
+                 ▼                                               ▼
+     ┌─────────────────────────┐                    ┌──────────────────────────┐
+     │ TENSORFLOW / KERAS      │                    │ ANOMALY / INCIDENT       │
+     │ AUTOENCODER             │───────────────────►│ GENERATION               │
+     │                         │                    │                          │
+     │ Feature Vector:         │                    │ • Anomaly Decision       │
+     │ • Particle Count        │                    │ • Severity               │
+     │ • Temperature           │                    │ • Recommended Action     │
+     │ • Humidity              │                    │ • Incident Evidence      │
+     │ • Airflow               │                    └────────────┬─────────────┘
+     │ • Gas                   │                                 │
+     │ • PPE                   │                                 │
+     └─────────────────────────┘                                 │
+                                                                 │
+                                                                 ▼
+========================================================================================================================
+                                      MANUFACTURING SECURITY / SAFETY / ENTERPRISE DOMAINS
+========================================================================================================================
+
+
+      ┌──────────────────────────────┐       ┌──────────────────────────────┐       ┌──────────────────────────────┐
+      │      PROCESS SECURITY        │       │       RECIPE INTEGRITY       │       │      SUPPLY CHAIN SECURITY   │
+      │                              │       │                              │       │                              │
+      │ OPC-UA Validation            │       │ Approved Recipe              │       │ Supplier Information         │
+      │ Modbus Validation            │       │          ↓                   │       │          ↓                   │
+      │ OOS Detection                │       │      SHA-256 Check           │       │ Supplier Validation          │
+      │ Protocol Monitoring          │       │          ↓                   │       │          ↓                   │
+      │                              │       │ Valid / Tampered             │       │ Material Risk Assessment     │
+      └──────────────┬───────────────┘       └──────────────┬───────────────┘       │ Dual-use / Export Risk       │
+                     │                                      │                       │          ↓                   │
+                     │ Process Security                     │ Tamper Evidence       │ Traceability Ledger          │
+                     │ Evidence                             │                       │          ↓                   │
+                     │                                      │                       │ Ledger Verification          │
+                     ▼                                      ▼                       └──────────────┬───────────────┘
+                                                                                                   │
+                                                                                                   │ Supply-Chain Evidence
+                                                                                                   │
+
+
+      ┌──────────────────────────────┐       ┌──────────────────────────────┐       ┌──────────────────────────────┐
+      │       EHS / WORKER SAFETY    │       │       CYBERSECURITY          │       │          DEVSECOPS           │
+      │                              │       │                              │       │                              │
+      │ Safety Signals               │       │ Suricata IDS                 │       │ Bandit                       │
+      │ • PPE Compliance             │       │ Industrial Traffic / PCAP    │       │ Semgrep                      │
+      │ • Gas / Chemical Events      │       │                              │       │ Trivy                        │
+      │ • Hazard Indicators          │       │ Protocol Security            │       │                              │
+      │ • Environmental Events       │       │ Recipe Integrity             │       │ Static / Container Security  │
+      │          ↓                   │       │ Audit / Security Controls    │       │ Validation Evidence          │
+      │ EHS Incident Engine          │       └──────────────┬───────────────┘       └──────────────┬───────────────┘
+      │          ↓                   │                      │                                      │
+      │ Severity / Response Action   │                      │ Security Evidence                    │ Scan Evidence
+      │          ↓                   │                      │                                      │
+      │ Emergency Response           │                      │                                      │
+      └──────────────┬───────────────┘                      │                                      │
+                     │                                      │                                      │
+                     │ Safety Evidence                      │                                      │
+                     │                                      │                                      │
+                     └──────────────────────────────┬───────┴──────────────────────────────────────┘
+                                                    │
+                                                    ▼
+                                    ┌────────────────────────────────────┐
+                                    │     CENTRAL INCIDENT / EVIDENCE    │
+                                    │              SUMMARY               │
+                                    │                                    │
+                                    │ • AI Anomalies                     │
+                                    │ • Process Security Events          │
+                                    │ • Recipe Tamper Events             │
+                                    │ • Supply-Chain Risk Events         │
+                                    │ • EHS / Safety Incidents           │
+                                    │ • Cybersecurity Findings           │
+                                    │ • DevSecOps Findings               │
+                                    └──────────────────┬─────────────────┘
+                                                       │
+                                                       │ Consolidated Evidence
+                                                       ▼
+                                    ┌────────────────────────────────────┐
+                                    │           AUDIT LOGGING            │
+                                    │                                    │
+                                    │ • Event Records                    │
+                                    │ • Security Evidence                │
+                                    │ • Operational Evidence             │
+                                    │ • Traceability Evidence            │
+                                    └──────────────────┬─────────────────┘
+                                                       │
+                                                       ▼
+                                    ┌────────────────────────────────────┐
+                                    │        COMPLIANCE REPORTING        │
+                                    │                                    │
+                                    │ • ISO 14644-style Cleanroom        │
+                                    │ • ISO 14001 Environmental          │
+                                    │ • OSHA / EPA-style Evidence        │
+                                    │ • Safety / Waste Documentation     │
+                                    │ • Regulatory Reporting             │
+                                    └──────────────────┬─────────────────┘
+                                                       │
+                                                       ▼
+                                    ┌────────────────────────────────────┐
+                                    │      FINAL AUDIT / EXAM EVIDENCE   │
+                                    │                                    │
+                                    │ • Logs                             │
+                                    │ • CSV / JSON Reports               │
+                                    │ • Compliance Reports               │
+                                    │ • Dashboard Evidence               │
+                                    │ • Validation Results               │
+                                    │ • Security Scan Results            │
+                                    └────────────────────────────────────┘
+
+
+
+========================================================================================================================
+                                      SUPPLY-CHAIN SECURITY DOMAIN
+========================================================================================================================
+
+                  ┌──────────────────────┐
+                  │      SUPPLIER        │
+                  └──────────┬───────────┘
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │    MATERIAL BATCH    │
+                  └──────────┬───────────┘
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │ SUPPLIER VALIDATION  │
+                  └──────────┬───────────┘
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │   MATERIAL RISK      │
+                  │    ASSESSMENT        │
+                  │                      │
+                  │ Dual-use / Export    │
+                  │ Controlled Risk      │
+                  └──────────┬───────────┘
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │ TRACEABILITY LEDGER  │
+                  └──────────┬───────────┘
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │ LEDGER VERIFICATION  │
+                  │                      │
+                  │ Integrity / Tamper   │
+                  │ Detection            │
+                  └──────────┬───────────┘
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │ SUPPLY-CHAIN         │
+                  │ SECURITY EVIDENCE    │
+                  └──────────┬───────────┘
+                             │
+                             ▼
+                  CENTRAL INCIDENT / EVIDENCE SUMMARY
+
+
+
+========================================================================================================================
+                                      TRUST / ARCHITECTURE BOUNDARIES
+========================================================================================================================
+
+     ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+     │ TB-1 — MANUFACTURING / OT                                                                                    │
+     │                                                                                                              │
+     │ Cleanroom Sensors • Industrial Process Simulators • OPC-UA • Modbus                                          │
+     └───────────────────────────────────────────────┬──────────────────────────────────────────────────────────────┘
+                                                     │
+                                                     ▼
+     ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+     │ TB-2 — EDGE / MESSAGING                                                                                      │
+     │                                                                                                              │
+     │ Edge Gateway • Mosquitto MQTT                                                                                │
+     └───────────────────────────────────────────────┬──────────────────────────────────────────────────────────────┘
+                                                     │
+                                                     ▼
+     ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+     │ TB-3 — DATA / AI / OPERATIONS                                                                                │
+     │                                                                                                              │
+     │ Telemetry Ingestion • InfluxDB • scikit-learn • TensorFlow/Keras • Grafana • FUXA                            │
+     └───────────────────────────────────────────────┬──────────────────────────────────────────────────────────────┘
+                                                     │
+                                                     ▼
+     ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+     │ TB-4 — SECURITY / SAFETY / ENTERPRISE                                                                        │
+     │                                                                                                              │
+     │ Process Security • Recipe Integrity • Supply Chain • EHS • Suricata • DevSecOps                              │
+     └───────────────────────────────────────────────┬──────────────────────────────────────────────────────────────┘
+                                                     │
+                                                     ▼
+     ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+     │ TB-5 — GOVERNANCE / EVIDENCE                                                                                 │
+     │                                                                                                              │
+     │ Incident Summary • Audit Logging • Compliance Reporting • Final Evidence                                     │
+     └──────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+
+========================================================================================================================
+                                           PRIMARY ARCHITECTURE FLOWS
+========================================================================================================================
+
+ CLEANROOM / AI:
+ Sensors → Edge Gateway → MQTT → Ingestion → InfluxDB
+                                      │
+                       ┌──────────────┴──────────────┐
+                       ▼                             ▼
+                scikit-learn                 TensorFlow / Keras
+                       │                             │
+                       └──────────────┬──────────────┘
+                                      ▼
+                              Anomaly / Incident
+                                      │
+                             ┌────────┴────────┐
+                             ▼                 ▼
+                          Grafana            FUXA
+
+
+ PROCESS CONTROL:
+ Industrial Process Simulator
+            │
+     ┌──────┴──────┐
+     ▼             ▼
+   OPC-UA        Modbus
+     │             │
+     ▼             ▼
+ OPC-UA         Modbus
+ Validator      Validator
+     │             │
+     └──────┬──────┘
+            ▼
+   OOS / Security Event
+            │
+            ▼
+   Central Evidence
+
+
+ RECIPE INTEGRITY:
+ Approved Recipe
+       ↓
+    SHA-256
+       ↓
+ Integrity Validation
+       ↓
+ Valid / Tampered
+       ↓
+ Security Evidence
+
+
+ SUPPLY CHAIN:
+ Supplier
+    ↓
+ Material Batch
+    ↓
+ Supplier Validation
+    ↓
+ Material Risk Assessment
+    ↓
+ Traceability Ledger
+    ↓
+ Ledger Verification
+    ↓
+ Supply-Chain Evidence
+
+
+ WORKER SAFETY / EHS:
+ PPE / Gas / Chemical / Environmental Signals
+                    ↓
+                 EHS Engine
+                    ↓
+              Severity Assessment
+                    ↓
+              Emergency Response
+                    ↓
+                Safety Evidence
+
+
+ CYBERSECURITY:
+ Industrial / Security Test Traffic
+                    ↓
+               Suricata IDS
+                    ↓
+             Security Finding
+                    ↓
+                Evidence
+
+
+ DEVSECOPS:
+ Source / Dependencies / Containers
+              ↓
+      Bandit / Semgrep / Trivy
+              ↓
+          Scan Results
+              ↓
+            Evidence
+
+
+ GOVERNANCE:
+ Incidents + Security Findings + Safety Evidence + Supply-Chain Evidence
+                              ↓
+                  Central Incident Summary
+                              ↓
+                       Audit Logging
+                              ↓
+                   Compliance Reporting
+                              ↓
+                    Final Audit Evidence
+
+
+========================================================================================================================
+                                             ARCHITECTURE STATUS
+========================================================================================================================
+
+ [IMPLEMENTED]
+ Real repository components, services, scripts, validators, dashboards, reports and
+ evidence-generation mechanisms.
+
+ [SIMULATED]
+ Physical cleanroom sensors, semiconductor equipment, industrial machines and PLCs
+ are represented by software simulators for the educational proof-of-concept.
+
+ [TARGET / FUTURE]
+ Production-scale industrial deployment, enterprise IAM, hardened OT segmentation,
+ high-availability infrastructure and other production controls are architectural
+ extensions and are not claimed as fully implemented by the examination PoC.
+
+
+========================================================================================================================
+                                                LEGEND
+========================================================================================================================
+
+  ┌─────────────────────────────┐
+  │ Architecture Component      │   = System / service / operational component
+  └─────────────────────────────┘
+
+  ┌─────────────────────────────┐
+  │ Data Store                  │   = Persistent telemetry / evidence store
+  └─────────────────────────────┘
+
+  A ───────────────► B             = Primary data / operational flow
+  A - - - - - - - ► B             = Security / evidence / control relationship
+  TB-x                             = Trust Boundary
+  ↓                                = Direction of processing / workflow
+
+  IMPORTANT:
+  Grafana and FUXA are operational visualization interfaces.
+  They are NOT positioned as causal upstream dependencies for EHS, cybersecurity,
+  supply-chain security or compliance processing.
