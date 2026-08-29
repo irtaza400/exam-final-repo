@@ -1,0 +1,56 @@
+A06 — CLOUD / HYBRID ARCHITECTURE
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          CURRENT IMPLEMENTATION                             │
+│                                AWS CLOUD                                    │
+│                                                                             │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │                          AWS EC2 INSTANCE                           │   │
+│   │                            Ubuntu Linux                             │   │
+│   │                                                                     │   │
+│   │   ┌──────────────────────────────┐   ┌───────────────────────────┐   │   │
+│   │   │       DOCKER / COMPOSE       │   │    HOST PYTHON RUNTIME    │   │   │
+│   │   │                              │   │                           │   │   │
+│   │   │  topic127-network            │   │  Edge Gateway             │   │   │
+│   │   │  • Mosquitto                 │   │  Edge AI / ML             │   │   │
+│   │   │  • InfluxDB                  │   │  MQTT → Influx            │   │   │
+│   │   │  • Grafana                   │   │  Sensor Simulator         │   │   │
+│   │   │  • FUXA                      │   │  OPC-UA Server            │   │   │
+│   │   │  • Suricata*                 │   │  Modbus Server            │   │   │
+│   │   │                              │   │  Validators / Reports     │   │   │
+│   │   └──────────────┬───────────────┘   └──────────────┬────────────┘   │   │
+│   │                  │                                  │                │   │
+│   │                  └──────────────┬───────────────────┘                │   │
+│   │                                 │                                    │   │
+│   │                       Topic 127 Platform                             │   │
+│   │                                 │                                    │   │
+│   │               Docker volumes / runtime evidence                      │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│   Demo Security Group: 22 / 3000 / 8086 / 1883 / 4840 / 5020                │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       │ TARGET EVOLUTION
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                             FUTURE HYBRID TARGET                            │
+│                                                                             │
+│   ┌──────────────────────────────┐     ┌────────────────────────────────┐   │
+│   │        OT / EDGE SITE        │     │     CENTRAL CLOUD PLATFORM     │   │
+│   │                              │     │                                │   │
+│   │ Sensors / PLCs / Equipment   │     │ Central telemetry              │   │
+│   │ Local MQTT / Gateway         │◄───►│ Long-term data / analytics      │   │
+│   │ Local Edge AI                │     │ Central monitoring             │   │
+│   │ Local safety response        │     │ Security operations            │   │
+│   │ Local industrial protocols   │     │ Compliance / evidence          │   │
+│   └──────────────────────────────┘     │ Enterprise identity            │   │
+│                                        │ High availability              │   │
+│                                        └────────────────────────────────┘   │
+│                                                                             │
+│              Future controls: private networking • OT/IT segmentation       │
+│                   encryption • restricted access • centralized security operations          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+* Suricata = optional security-demo profile
+CURRENT = IMPLEMENTED
+FUTURE HYBRID = TARGET / NOT CURRENTLY DEPLOYED
