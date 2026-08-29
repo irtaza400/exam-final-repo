@@ -1,423 +1,801 @@
 A02 — Topic 127 Network / Deployment Architecture
+
 ========================================================================================================================
-                    TOPIC 127 — NETWORK / DEPLOYMENT ARCHITECTURE
-   AWS EC2 • Ubuntu • Docker Compose • Host Python Services • Docker Bridge Network • Industrial Protocols
+TOPIC 127 — NETWORK / DEPLOYMENT ARCHITECTURE
+AWS EC2 • Ubuntu • Docker Compose • Host Python Services • Docker Bridge Network • Industrial Protocols
+=======================================================================================================
+
+ARCHITECTURE SCOPE
+
+A02 answers:
+
+"WHERE do the Topic 127 components run, and HOW do the deployed components
+communicate across the EC2 host, Docker network, host interfaces and
+demonstration endpoints?"
+
+A01 = functional component architecture
+A02 = deployment / network placement
+A03 = data movement
+A04 = workflow execution
+A05 = security controls / trust boundaries
+A06 = current EC2 implementation → future hybrid/cloud target
+
 ========================================================================================================================
 
-                                          ┌──────────────────────────────────────┐
-                                          │          EXAM / ADMIN USER           │
-                                          │                                      │
-                                          │  SSH / Browser Access                │
-                                          │  Operational Monitoring              │
-                                          │  Demonstration / Validation          │
-                                          └──────────────────┬───────────────────┘
-                                                             │
-                                                             │ External Access
-                                                             ▼
-                                          ┌──────────────────────────────────────┐
-                                          │      AWS EC2 SECURITY GROUP          │
-                                          │      DEMONSTRATION EXPOSURE          │
-                                          │                                      │
-                                          │  22   SSH                            │
-                                          │  3000 Grafana                        │
-                                          │  8086 InfluxDB                       │
-                                          │  1883 MQTT                           │
-                                          │  4840 OPC-UA                         │
-                                          │  5020 Modbus                         │
-                                          └──────────────────┬───────────────────┘
-                                                             │
-                                                             │ Allowed demo access
-                                                             ▼
-========================================================================================================================
-AWS CLOUD / EC2 DEPLOYMENT HOST
-                           ┌─────────────────────────────────────────────────┐
-                           │              AWS EC2 INSTANCE                   │
-                           │                                                 │
-                           │                 Ubuntu Linux                    │
-                           │                                                 │
-                           │       Topic 127 Examination Environment         │
-                           └──────────────────────┬──────────────────────────┘
-                                                  │
-                     ┌────────────────────────────┴────────────────────────────┐
-                     │                                                         │
-                     ▼                                                         ▼
-      ┌──────────────────────────────────┐                       ┌────────────────────────────────────────┐
-      │       DOCKER / COMPOSE           │                       │ HOST-SIDE PYTHON SERVICES / PROJECT    │
-      │                                  │                       │                 SCRIPTS                │
-      │  Containerized Platform          │                       │                                        │
-      │                                  │                       │  Executed on EC2 host                  │
-      │  • Mosquitto MQTT                │                       │                                        │
-      │  • InfluxDB                      │                       │  • Edge Gateway                        │
-      │  • Grafana                       │                       │  • MQTT → InfluxDB Ingestion           │
-      │  • FUXA                          │                       │  • Edge AI / ML Anomaly Analysis       │
-      │  • Suricata*                     │                       │  • OPC-UA Server                       │
-      │                                  │                       │  • Modbus Server                       │
-      │  * security-demo profile         │                       │  • Validation scripts                  │
-      └──────────────────┬───────────────┘                       │  • Supply Chain / EHS scripts          │
-                         │                                       │  • Compliance / Reporting              │
-                         │                                       └────────────────────┬───────────────────┘
-                         │                                                            │
-                         ▼                                                            ▼
-========================================================================================================================
-DOCKER NETWORK / HOST INTERFACES
-                  ┌─────────────────────────────────────────────────────────────┐
-                  │               DOCKER BRIDGE NETWORK                         │
-                  │                   topic127-network                          │
-                  │                                                             │
-                  │   Container-to-container communication                      │
-                  │                                                             │
-                  │   ┌────────────┐      ┌────────────┐      ┌────────────┐    │
-                  │   │ Mosquitto  │      │  InfluxDB  │      │  Grafana   │    │
-                  │   └────────────┘      └────────────┘      └────────────┘    │
-                  │                                                             │
-                  │   ┌────────────┐      ┌────────────┐                        │
-                  │   │    FUXA    │      │  Suricata* │                        │
-                  │   └────────────┘      └────────────┘                        │
-                  │                                                             │
-                  │   * enabled through security-demo profile                   │
-                  └─────────────────────────────────────────────────────────────┘
-========================================================================================================================
-PRIMARY MQTT TELEMETRY NETWORK FLOW
-                                       ┌────────────────────────────┐
-                                       │ CLEANROOM SENSOR SIMULATOR │
-                                       │                            │
-                                       │ Particle / Environmental   │
-                                       │ Telemetry                  │
-                                       └─────────────┬──────────────┘
-                                                     │
-                                                     │ RAW TELEMETRY
-                                                     │ topic127/raw/cleanroom
-                                                     ▼
-                                            ┌─────────────────────┐
-                                            │   MOSQUITTO MQTT    │
-                                            │       BROKER        │
-                                            │       :1883         │
-                                            └──────────┬──────────┘
-                                                       │
-                              ┌────────────────────────┴────────────────────────┐
-                              │                                                 │
-                              ▼                                                 ▼
-                     ┌─────────────────────┐                   ┌────────────────────────┐
-                     │    EDGE GATEWAY     │                   │   MQTT → INFLUXDB      │
-                     │                     │                   │   INGESTION SERVICE    │
-                     │   Python Service    │                   │                        │
-                     │                     │                   │ Python service         │
-                     │ Validation          │                   │ Subscribes to raw      │
-                     │ Enrichment          │                   │ MQTT telemetry         │
-                     │ Routing             │                   └────────────┬───────────┘
-                     └──────────┬──────────┘                                │
-                                │                                           │ HTTP :8086
-                                │ VALIDATED TELEMETRY                       ▼
-                                │ topic127/edge/validated          ┌────────────────────┐
-                                ▼                                  │      INFLUXDB      │
-                     ┌─────────────────────┐                       │ Time-Series Data   │
-                     │   VALIDATED MQTT    │                       │ Storage            │
-                     │        TOPIC        │                       └─────────┬──────────┘
-                     └──────────┬──────────┘                                 │
-                                │                                            ▼
-                                ▼                                  ┌───────────────────┐
-                     ┌─────────────────────┐                       │   GRAFANA :3000   │
-                     │      EDGE AI /      │                       │                   │
-                     │     ML ANOMALY      │                       │ Monitoring        │
-                     │      ANALYSIS       │                       │ Dashboards        │
-                     │                     │                       │ Analytics         │
-                     │ scikit-learn /      │                       └───────────────────┘
-                     │ custom AI logic     │
-                     └──────────┬──────────┘
-                                │
-                                │ AI result / alert
-                                ▼
-                     ┌─────────────────────┐
-                     │  ANOMALY / INCIDENT │
-                     │      EVIDENCE       │
-                     └─────────────────────┘
+1. EXTERNAL EXAM / ADMIN ACCESS
+   ========================================================================================================================
 
- NOTE:
- Mosquitto acts as a publish/subscribe message broker.
- The raw telemetry path fans out into two implemented processing paths:
- Raw MQTT → Edge Gateway → Validated MQTT → Edge AI
- Raw MQTT → MQTT → InfluxDB Ingestion → InfluxDB → Grafana
-========================================================================================================================
-FUXA / OPERATIONAL HMI NETWORK PATH
-                                       ┌────────────────────────────┐
-                                       │        FUXA :1881          │
-                                       │                            │
-                                       │ HMI / SCADA-style          │
-                                       │ Operational Visualization  │
-                                       └─────────────┬──────────────┘
-                                                     │
-                                                     │ host.docker.internal
-                                                     ▼
-                                       ┌────────────────────────────┐
-                                       │     EC2 HOST SERVICES      │
-                                       │                            │
-                                       │ OPC-UA / Industrial        │
-                                       │ Process Services           │
-                                       └─────────────┬──────────────┘
-                                                     │
-                                                     ▼
-                                       ┌────────────────────────────┐
-                                       │ INDUSTRIAL PROCESS DATA    │
-                                       │                            │
-                                       │ Machine Status             │
-                                       │ Process Parameters         │
-                                       │ Security State             │
-                                       └────────────────────────────┘
-========================================================================================================================
-INDUSTRIAL PROTOCOL SERVICES
-                       ┌──────────────────────────────────────┐
-                       │        HOST-SIDE INDUSTRIAL ZONE     │
-                       │                                      │
-                       │  Python Process-Control Simulators   │
-                       └──────────────────┬───────────────────┘
-                                          │
-                       ┌──────────────────┴──────────────────┐
-                       │                                     │
-                       ▼                                     ▼
-            ┌──────────────────────┐              ┌──────────────────────┐
-            │     OPC-UA SERVER    │              │    MODBUS SERVER     │
-            │                      │              │                      │
-            │ TCP :4840            │              │ TCP :5020            │
-            │                      │              │ PLC / Register model │
-            │ NanoManufacturing    │              │ Holding registers    │
-            │ process variables    │              │                      │
-            └───────────┬──────────┘              └───────────┬──────────┘
-                        │                                     │
-                        │ OPC-UA                              │ Modbus TCP
-                        ▼                                     ▼
-            ┌──────────────────────┐              ┌──────────────────────┐
-            │    OPC-UA CLIENT /   │              │    MODBUS CLIENT /   │
-            │       VALIDATOR      │              │       VALIDATOR      │
-            └───────────┬──────────┘              └───────────┬──────────┘
-                        │                                     │
-                        │ Process Security                    │ Process Security
-                        │ Evidence                            │ Evidence
-                        └──────────────────┬──────────────────┘
-                                           │
-                                           ▼
-                                ┌────────────────────────┐
-                                │ PROCESS SECURITY       │
-                                │ EVENTS / OOS FINDINGS  │
-                                └────────────────────────┘
-========================================================================================================================
-EXTERNAL ACCESS / SECURITY GROUP
-                     AWS EC2 SECURITY GROUP — DEMONSTRATION EXPOSURE
+   ```
+                          ┌──────────────────────────────────────┐
+                          │          EXAM / ADMIN USER           │
+                          │                                      │
+                          │ • SSH / administration               │
+                          │ • Browser access                     │
+                          │ • Grafana monitoring                 │
+                          │ • FUXA demonstration (local / tunneled) │
+                          │ • Validation / examination           │
+                          └──────────────────┬───────────────────┘
+                                             │
+                                             │ External demo access
+                                             ▼
+                          ┌──────────────────────────────────────┐
+                          │      AWS EC2 SECURITY GROUP          │
+                          │      DEMONSTRATION EXPOSURE          │
+                          │                                      │
+                          │ TCP 22   → SSH                       │
+                          │ TCP 3000 → Grafana                   │
+                          │ TCP 8086 → InfluxDB                  │
+                          │ TCP 1883 → MQTT                      │
+                          │ TCP 4840 → OPC-UA                    │
+                          │ TCP 5020 → Modbus                    │
+                          └──────────────────┬───────────────────┘
+                                             │
+                                             ▼
+   ```
 
-   ┌──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┐
-   │   TCP 22     │   TCP 3000   │   TCP 8086   │   TCP 1883   │   TCP 4840   │   TCP 5020   │
-   │     SSH      │   Grafana    │   InfluxDB   │     MQTT     │    OPC-UA    │    Modbus    │
-   └──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┘
+========================================================================================================================
+2. CURRENT IMPLEMENTED CLOUD / HOST DEPLOYMENT
+==============================================
 
-   IMPORTANT:
-   These ports are documented for the examination / demonstration environment.
-   They should NOT be interpreted as a recommended production security-group design.
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                      AWS CLOUD — CURRENT IMPLEMENTATION                                               │
+│                                                                                                                      │
+│  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                                   AWS EC2 INSTANCE                                                               │  │
+│  │                                   Ubuntu Linux                                                                  │  │
+│  │                                                                                                                │  │
+│  │       Topic 127 Examination / Demonstration Environment                                                        │  │
+│  │                                                                                                                │  │
+│  │       ┌─────────────────────────────────┐       ┌───────────────────────────────────────────────────────────┐  │  │
+│  │       │       DOCKER / COMPOSE          │       │       HOST-SIDE PYTHON SERVICES / PROJECT SCRIPTS       │  │  │
+│  │       │                                 │       │                                                           │  │  │
+│  │       │ Containerized infrastructure    │       │ Executed directly on EC2 host                          │  │  │
+│  │       │                                 │       │                                                           │  │  │
+│  │       │ • Mosquitto                     │       │ • Cleanroom Sensor Simulator                            │  │  │
+│  │       │ • InfluxDB                      │       │ • Edge Gateway                                           │  │  │
+│  │       │ • Grafana                       │       │ • Custom Edge AI inference                              │  │  │
+│  │       │ • FUXA                          │       │ • MQTT → InfluxDB writer                                 │  │  │
+│  │       │ • Suricata*                    │       │ • OPC-UA Server                                          │  │  │
+│  │       │                                 │       │ • Modbus Server                                          │  │  │
+│  │       │ * security-demo profile         │       │ • OPC-UA / Modbus validators                             │  │  │
+│  │       └────────────────┬────────────────┘       │ • Recipe / Supply-chain / EHS workflows                │  │  │
+│  │                        │                        │ • Audit / Incident / Compliance / Reporting               │  │  │
+│  │                        │                        │ • scikit-learn demonstration                              │  │  │
+│  │                        │                        │ • TensorFlow/Keras demonstration                          │  │  │
+│  │                        │                        └──────────────────────────┬────────────────────────────────┘  │  │
+│  └────────────────────────┼───────────────────────────────────────────────────┼───────────────────────────────────┘  │
+└───────────────────────────┼───────────────────────────────────────────────────┼──────────────────────────────────────┘
+│                                                   │
+▼                                                   ▼
 
-   Production deployment should use:
-   • restricted source IP ranges
-   • private networking where possible
-   • segmentation between OT and IT
-   • strong authentication
-   • encrypted communications where supported
-   • least-privilege network access
 ========================================================================================================================
-DEPLOYMENT / TRUST BOUNDARIES
- ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
- │ BOUNDARY 1 — EXTERNAL / ADMIN ACCESS                                                                         │
- │                                                                                                              │
- │ Examiner Browser • SSH • Demonstration Access • AWS Security Group                                          │
- └───────────────────────────────────────────────┬──────────────────────────────────────────────────────────────┘
-                                                 │
-                                                 ▼
- ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
- │ BOUNDARY 2 — AWS EC2 HOST                                                                                    │
- │                                                                                                              │
- │ Ubuntu • Docker Engine • Host Python Services / Project Scripts                                              │
- └──────────────────────────────┬───────────────────────────────────────┬───────────────────────────────────────┘
-                                │                                       │
-                                ▼                                       ▼
- ┌───────────────────────────────────────────────┐       ┌──────────────────────────────────────────────────────┐
- │ BOUNDARY 3 — DOCKER APPLICATION NETWORK       │       │ BOUNDARY 4 — HOST-SIDE INDUSTRIAL SERVICES          │
- │                                               │       │                                                      │
- │ topic127-network                              │       │ OPC-UA :4840                                         │
- │ Mosquitto                                     │       │ Modbus :5020                                         │
- │ InfluxDB                                      │       │ Edge Gateway / Python services                       │
- │ Grafana                                       │       │ Industrial validation                                │
- │ FUXA                                          │       │                                                      │
- │ Suricata*                                     │       └──────────────────────────────┬───────────────────────┘
- └───────────────────────────────┬───────────────┘                                      │
-                                 │                                                      │
-                                 └──────────────────┬───────────────────────────────────┘
-                                                    │
-                                                    ▼
- ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
- │ BOUNDARY 5 — EVIDENCE / SECURITY / GOVERNANCE                                                               │
- │                                                                                                              │
- │ Incident Reports • Audit Logs • Security Scans • Compliance Reports • Final Evidence                       │
- └──────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+3. DOCKER NETWORK
+=================
+
+```
+                   ┌───────────────────────────────────────────────────────────┐
+                   │              DOCKER BRIDGE NETWORK                       │
+                   │                  topic127-network                        │
+                   │                                                           │
+                   │   Container-to-container communication                    │
+                   │                                                           │
+                   │   ┌────────────┐      ┌────────────┐      ┌────────────┐ │
+                   │   │ Mosquitto  │      │  InfluxDB  │      │  Grafana   │ │
+                   │   │   :1883    │      │   :8086    │      │   :3000    │ │
+                   │   └────────────┘      └────────────┘      └────────────┘ │
+                   │                                                           │
+                   │   ┌────────────┐      ┌────────────┐                     │
+                   │   │    FUXA    │      │  Suricata* │                     │
+                   │   │   :1881    │      │   PCAP     │                     │
+                   │   └────────────┘      └────────────┘                     │
+                   │                                                           │
+                   │   * enabled through security-demo profile                │
+                   └───────────────────────────────────────────────────────────┘
+```
+
+Docker Compose defines all five containers on topic127-network with driver=bridge.
+
+This is the CURRENT Docker deployment.
+It is NOT Kubernetes, EKS, ECS or a multi-node service mesh.
+
 ========================================================================================================================
-DEPLOYMENT RELATIONSHIPS
-AWS EC2
-   │
-   ├── Ubuntu Linux
-   │
-   ├── Docker Engine / Compose
-   │       │
-   │       └── topic127-network
-   │              │
-   │              ├── Mosquitto
-   │              ├── InfluxDB
-   │              ├── Grafana
-   │              ├── FUXA
-   │              └── Suricata*
-   │
-   └── Host Python Services / Project Scripts
-           │
-           ├── Edge Gateway
-           ├── MQTT → InfluxDB Ingestion
-           ├── Edge AI / ML Anomaly Analysis
-           ├── OPC-UA Server :4840
-           ├── Modbus Server :5020
-           ├── Validation
-           ├── Supply Chain
-           ├── EHS
-           └── Compliance / Reporting
+4. HOST-SIDE PYTHON RUNTIME
+===========================
+
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                         EC2 HOST — PYTHON RUNTIME                                    │
+│                                                                                      │
+│ LONG-RUNNING TELEMETRY SERVICES                                                      │
+│                                                                                      │
+│  ┌────────────────────┐     ┌────────────────────┐     ┌──────────────────────────┐ │
+│  │ Cleanroom Sensor   │     │ Edge Gateway       │     │ Custom Edge AI           │ │
+│  │ Simulator          │     │                    │     │ Inference                │ │
+│  │                    │     │ Validation         │     │                          │ │
+│  │ Raw MQTT publisher │     │ Enrichment         │     │ Rule-based inference    │ │
+│  │                    │     │ Routing            │     │ Risk / severity / action │ │
+│  └────────────────────┘     └────────────────────┘     └──────────────────────────┘ │
+│                                                                                      │
+│ INDUSTRIAL SERVICES                                                                  │
+│                                                                                      │
+│  ┌────────────────────────┐              ┌────────────────────────┐                  │
+│  │ OPC-UA Server :4840    │              │ Modbus Server :5020   │                  │
+│  │ Process variables      │              │ PLC/register model    │                  │
+│  └────────────────────────┘              └────────────────────────┘                  │
+│                                                                                      │
+│ PROJECT / VALIDATION SERVICES                                                         │
+│                                                                                      │
+│ • OPC-UA validator                                                                  │
+│ • Modbus validator                                                                  │
+│ • Recipe integrity checker                                                          │
+│ • Supply-chain / ledger workflows                                                   │
+│ • EHS incident engine                                                               │
+│ • Audit logger                                                                      │
+│ • Incident Manager                                                                  │
+│ • Compliance report generator                                                       │
+│ • Dashboard healthcheck                                                             │
+│ • DevSecOps scanner                                                                 │
+│ • Final project report generator                                                    │
+│                                                                                      │
+│ SEPARATE AI / ML DEMONSTRATIONS                                                      │
+│                                                                                      │
+│ • scikit-learn IsolationForest                                                      │
+│ • TensorFlow/Keras Autoencoder                                                      │
+│                                                                                      │
+│ IMPORTANT:                                                                          │
+│ The scikit-learn and TensorFlow/Keras workflows are separate executable             │
+│ demonstrations, not persistent Edge AI network services.                           │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
 ========================================================================================================================
-KEY NETWORK FLOWS
-CLEANROOM TELEMETRY:
-Sensor Simulator
-  ↓
-Raw MQTT Topic
+5. CLEANROOM TELEMETRY — LOGICAL NETWORK TOPOLOGY
+=================================================
+
+```
+                     ┌──────────────────────────────┐
+                     │ CLEANROOM SENSOR SIMULATOR   │
+                     │ EC2 host-side Python         │
+                     └──────────────┬───────────────┘
+                                    │
+                                    │ RAW TELEMETRY
+                                    │ topic127/raw/cleanroom
+                                    ▼
+                           ┌─────────────────────┐
+                           │ MOSQUITTO MQTT      │
+                           │ BROKER              │
+                           │ TCP :1883           │
+                           └──────────┬──────────┘
+                                      │
+                     ┌────────────────┴────────────────┐
+                     │                                 │
+                     ▼                                 ▼
+
+          ┌─────────────────────┐           ┌─────────────────────┐
+          │ EDGE GATEWAY        │           │ MQTT → INFLUXDB     │
+          │ EC2 host-side       │           │ WRITER              │
+          │ Python service      │           │ Host Python service  │
+          │                     │           │                       │
+          │ Validation          │           │ Configurable input   │
+          │ Enrichment          │           │ topic                 │
+          │ Routing             │           └──────────┬───────────┘
+          └──────────┬──────────┘                      │
+                     │                                 │
+                     │ validated telemetry             │ configured topic
+                     ▼                                 ▼
+          ┌─────────────────────┐           ┌─────────────────────┐
+          │ VALIDATED MQTT      │           │      INFLUXDB       │
+          │                     │           │ Time-series storage │
+          │ topic127/edge/      │           │ bucket: cleanroom   │
+          │ validated           │           └──────────┬──────────┘
+          └──────────┬──────────┘                      │
+                     │                                  ▼
+                     ▼                        ┌─────────────────────┐
+          ┌────────────────────────┐          │    GRAFANA :3000    │
+          │ CUSTOM EDGE AI         │          │ Monitoring / charts │
+          │                        │          └─────────────────────┘
+          │ Rule-based inference   │
+          └────────────┬───────────┘
+                       │
+              ┌────────┴─────────┐
+              ▼                  ▼
+   topic127/edge/ai/result   topic127/edge/ai/alert
+```
+
+========================================================================================================================
+6. MQTT INPUT-TOPIC MODES
+=========================
+
+STANDALONE MODE
+
+mqtt_to_influx.py
+│
+▼
+default TOPIC:
 topic127/raw/cleanroom
-  ↓
-Mosquitto MQTT Broker :1883
-  │
-  ├──────────────────────────────► MQTT → InfluxDB
-  │                                   ↓
-  │                                 InfluxDB :8086
-  │                                   ↓
-  │                                 Grafana :3000
-  │
-  └──────────────────────────────► Edge Gateway
-                                      ↓
-                                    Validated MQTT Topic
-                                    topic127/edge/validated
-                                      ↓
-                                    Edge AI / ML Analysis
-                                      ↓
-                                    Anomaly / Alert
-                                      ↓
-                                    Incident / Evidence
 
-OPC-UA:
-OPC-UA Server :4840
-  ↓
-OPC-UA Client / Validator
-  ↓
-OOS / Security Event
-  ↓
-Process Security Evidence
+COMPLETE-LAB / EXAMINATION MODE
 
-MODBUS:
-Modbus Server :5020
-  ↓
-Modbus Client / Validator
-  ↓
-OOS / Security Event
-  ↓
-Process Security Evidence
+run_complete_lab.sh
+│
+▼
+sets:
+MQTT_TOPIC=topic127/edge/validated
+│
+▼
+mqtt_to_influx.py
+│
+▼
+InfluxDB
 
-FUXA:
-FUXA :1881
-  │
-  ▼
-host.docker.internal
-  │
-  ▼
-Host-side Industrial / OPC-UA Services
-  ↓
-Operational HMI / Visualization
+IMPORTANT:
 
-SECURITY:
-Industrial / Security Test Traffic
-  ↓
-Suricata*
-  ↓
-Security Finding
-  ↓
-Evidence / Audit
+The same MQTT-to-Influx writer supports both modes.
+
+This distinction is a runtime configuration difference, not two simultaneous
+production deployments.
+
 ========================================================================================================================
-IMPLEMENTATION STATUS
-[IMPLEMENTED]
-• AWS EC2 / Ubuntu deployment
-• Docker Compose
-• Docker bridge network: topic127-network
-• Mosquitto MQTT
+7. CUSTOM EDGE AI NETWORK PATH
+==============================
+
+topic127/edge/validated
+│
+▼
+┌────────────────────────────────┐
+│ CUSTOM EDGE AI ENGINE          │
+│                                │
+│ • Rule-based risk scoring      │
+│ • Severity classification      │
+│ • Abnormal-metric analysis     │
+│ • Recommended actions          │
+└───────────────┬────────────────┘
+│
+┌────────┴─────────┐
+▼                  ▼
+AI result topic      AI alert topic
+topic127/edge/       topic127/edge/
+ai/result             ai/alert
+
+IMPORTANT:
+
+Custom Edge AI is a long-running validated-telemetry service.
+
+It is distinct from:
+
+• scikit-learn IsolationForest demonstration
+• TensorFlow/Keras Autoencoder demonstration
+
+========================================================================================================================
+8. OPC-UA NETWORK PATH
+======================
+
+```
+             ┌──────────────────────────────┐
+             │ OPC-UA SERVER                │
+             │ EC2 host-side Python         │
+             │ TCP :4840                    │
+             └──────────────┬───────────────┘
+                            │
+                            │ OPC-UA
+                            ▼
+             ┌──────────────────────────────┐
+             │ OPC-UA CLIENT VALIDATOR      │
+             │ EC2 host-side Python         │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+                 Process security evidence
+```
+
+Process variables include:
+
+• Recipe ID
+• Process name
+• Temperature
+• Pressure
+• Etch time
+• Machine status
+• Security state
+
+Supported process flows:
+
+• nanolithography
+• deposition
+• etching
+
+========================================================================================================================
+9. MODBUS / PLC NETWORK PATH
+============================
+
+```
+             ┌──────────────────────────────┐
+             │ MODBUS SERVER                │
+             │ EC2 host-side Python         │
+             │ TCP :5020                    │
+             └──────────────┬───────────────┘
+                            │
+                            │ Modbus TCP
+                            ▼
+             ┌──────────────────────────────┐
+             │ MODBUS CLIENT VALIDATOR      │
+             │ EC2 host-side Python         │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+                 Modbus security evidence
+```
+
+Register model includes:
+
+• Motor speed
+• Valve status
+• Chamber pressure
+• Alarm code
+• Recipe lock
+
+========================================================================================================================
+10. FUXA / HMI DEPLOYMENT PATH
+==============================
+
+```
+             ┌──────────────────────────────┐
+             │ FUXA CONTAINER               │
+             │ Docker / Compose             │
+             │ TCP :1881                    │
+             └──────────────┬───────────────┘
+                            │
+                            │ host.docker.internal
+                            ▼
+             ┌──────────────────────────────┐
+             │ EC2 HOST                     │
+             │                              │
+             │ OPC-UA Server :4840          │
+             │ Industrial process services  │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+                 FUXA OPC-UA TAGS / VIEW
+```
+
+FUXA is:
+
+• containerized
+• attached to topic127-network
+• connected to the EC2 host through host.docker.internal
+• configured for OPC-UA process variables
+• used as HMI / SCADA-style operational visualization
+
+FUXA :1881 is an application endpoint.
+It is NOT part of the documented main EC2 Security Group exposure list.
+
+========================================================================================================================
+11. GRAFANA / INFLUXDB DEPLOYMENT PATH
+======================================
+
+```
+             ┌──────────────────────────────┐
+             │ MQTT → INFLUXDB WRITER       │
+             │ EC2 host-side Python         │
+             └──────────────┬───────────────┘
+                            │
+                            │ HTTP :8086
+                            ▼
+             ┌──────────────────────────────┐
+             │ INFLUXDB                     │
+             │ Docker container              │
+             │                              │
+             │ Bucket: cleanroom             │
+             │ Measurement: cleanroom_       │
+             │ monitoring                    │
+             └──────────────┬───────────────┘
+                            │
+                            │ Docker network
+                            ▼
+             ┌──────────────────────────────┐
+             │ GRAFANA                      │
+             │ Docker container              │
+             │ TCP :3000                     │
+             └──────────────────────────────┘
+```
+
+Current implementation:
+
+MQTT-to-Influx host process
+↓
+InfluxDB container
+↓
+Grafana container
+
+========================================================================================================================
+12. SURICATA DEPLOYMENT
+=======================
+
+```
+             ┌──────────────────────────────┐
+             │ SURICATA CONTAINER            │
+             │ Docker / security-demo       │
+             │ profile                       │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+                Controlled PCAP analysis
+                            │
+                            ▼
+                     Security evidence
+```
+
+Repository deployment:
+
+• image = jasonish/suricata:latest
+• profile = security-demo
+• supplied PCAP mounted from repository
+• rules mounted from repository
+• output logs written to repository directory
+
+IMPORTANT:
+
+Suricata is an offline / controlled PCAP demonstration.
+It is not a continuously attached live network sensor.
+
+========================================================================================================================
+13. PERSISTENCE / RUNTIME STORAGE
+=================================
+
+DOCKER NAMED VOLUMES
+
+Mosquitto
+├── mosquitto-data
+└── mosquitto-log
+
+InfluxDB
+└── influxdb-data
+
+Grafana
+└── grafana-data
+
+FUXA HOST-MOUNTED DIRECTORIES
+
+./fuxa/appdata
+./fuxa/db
+./fuxa/logs
+./fuxa/images
+
+HOST-SIDE RUNTIME OUTPUTS
+
+./reports
+./logs
+./.runtime
+
+These hold generated reports, logs, PID/runtime information and
+demonstration evidence.
+
+IMPORTANT:
+
+Docker persistent service data and host-side runtime/report artifacts
+are separate storage mechanisms.
+
+========================================================================================================================
+14. EXTERNAL DEMONSTRATION ENDPOINT MAP
+=======================================
+
+┌────────────────────┬─────────────────────────────┬─────────────────────────────────┐
+│ Endpoint            │ Component                   │ Current role                    │
+├────────────────────┼─────────────────────────────┼─────────────────────────────────┤
+│ TCP 22             │ SSH                        │ EC2 administration              │
+│ TCP 3000           │ Grafana                    │ Monitoring / dashboard          │
+│ TCP 8086           │ InfluxDB                   │ Time-series API                 │
+│ TCP 1883           │ Mosquitto                  │ MQTT broker                     │
+│ TCP 4840           │ OPC-UA server              │ Industrial process simulator   │
+│ TCP 5020           │ Modbus server              │ PLC/register simulator          │
+│ TCP 1881           │ FUXA                       │ HMI / Docker application        │
+└────────────────────┴─────────────────────────────┴─────────────────────────────────┘
+
+DOCUMENTED MAIN EC2 SECURITY GROUP DEMONSTRATION LIST:
+
+22 / 3000 / 8086 / 1883 / 4840 / 5020
+
+FUXA :1881 is an application endpoint in the current Docker deployment,
+but it is not included in the documented main Security Group list.
+
+========================================================================================================================
+15. DEPLOYMENT MAP — CURRENT IMPLEMENTATION
+===========================================
+
+AWS EC2
+│
+├── Ubuntu Linux
+│
+├── Docker Engine / Compose
+│     │
+│     └── topic127-network
+│            │
+│            ├── Mosquitto :1883
+│            ├── InfluxDB :8086
+│            ├── Grafana :3000
+│            ├── FUXA :1881
+│            └── Suricata*
+│
+└── Host Python runtime
+│
+├── Cleanroom Sensor Simulator
+├── Edge Gateway
+├── Custom Edge AI inference
+├── MQTT → InfluxDB writer
+├── OPC-UA Server :4840
+├── Modbus Server :5020
+├── OPC-UA / Modbus validators
+├── Recipe Integrity
+├── Supply Chain / Ledger
+├── EHS
+├── Audit Logger
+├── Incident Manager
+├── Compliance / Reporting
+├── DevSecOps
+├── scikit-learn demonstration
+├── TensorFlow/Keras demonstration
+└── Final Reporting
+
+========================================================================================================================
+16. DEPLOYMENT ZONES
+====================
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ZONE 1 — EXTERNAL / ADMIN ACCESS                                                                              │
+│                                                                                                              │
+│ Examiner Browser • SSH • Demonstration Access • AWS Security Group                                          │
+└───────────────────────────────────────────────┬──────────────────────────────────────────────────────────────┘
+│
+▼
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ZONE 2 — AWS EC2 HOST                                                                                         │
+│                                                                                                              │
+│ Ubuntu • Docker Engine • Host Python Services / Project Scripts                                              │
+└──────────────────────────────┬───────────────────────────────────────┬───────────────────────────────────────┘
+│                                       │
+▼                                       ▼
+┌───────────────────────────────────────────────┐       ┌──────────────────────────────────────────────────────┐
+│ ZONE 3 — DOCKER APPLICATION NETWORK           │       │ ZONE 4 — HOST-SIDE INDUSTRIAL SERVICES              │
+│                                               │       │                                                      │
+│ topic127-network                              │       │ OPC-UA :4840                                         │
+│ Mosquitto                                     │       │ Modbus :5020                                         │
+│ InfluxDB                                      │       │ Edge Gateway / Custom Edge AI                       │
+│ Grafana                                       │       │ Industrial validators                                │
+│ FUXA                                          │       │                                                      │
+│ Suricata*                                     │       └──────────────────────────────┬───────────────────────┘
+└───────────────────────────────┬───────────────┘                                      │
+│                                                      │
+└──────────────────┬───────────────────────────────────┘
+│
+▼
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ZONE 5 — HOST-SIDE REPORTS / RUNTIME OUTPUTS                                                               │
+│                                                                                                              │
+│ Incident reports • Audit logs • Security scan output • Compliance reports • Final project evidence          │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+IMPORTANT:
+A02 shows deployment zones only.
+A05 remains authoritative for security trust boundaries and controls.
+
+========================================================================================================================
+17. NETWORK RELATIONSHIP SUMMARY
+================================
+
+CLEANROOM — LOGICAL TOPOLOGY
+
+Sensor Simulator
+↓
+Mosquitto :1883
+├──► Edge Gateway
+│       ↓
+│   topic127/edge/validated
+│       ↓
+│   Custom Edge AI
+│       ├──► AI Result Topic
+│       └──► AI Alert Topic
+│
+└──► MQTT → InfluxDB Writer
+↓
+InfluxDB :8086
+↓
+Grafana :3000
+
+RUNTIME MODE:
+
+In the complete-lab examination runtime, the MQTT-to-Influx writer
+is configured to consume topic127/edge/validated instead of the
+standalone default raw topic.
+
+INDUSTRIAL:
+
+OPC-UA Server :4840
+↓
+OPC-UA Validator
+↓
+Process Security Evidence
+
+Modbus Server :5020
+↓
+Modbus Validator
+↓
+Process Security Evidence
+
+HMI:
+
+FUXA :1881
+↓
+host.docker.internal
+↓
+EC2 host-side OPC-UA services
+↓
+FUXA operational view
+
+SECURITY DEMONSTRATION:
+
+Controlled PCAP
+↓
+Suricata container
+↓
+Security evidence
+
+========================================================================================================================
+18. IMPLEMENTATION STATUS
+=========================
+
+[CURRENTLY IMPLEMENTED]
+
+• AWS EC2 / Ubuntu
+• Docker Engine / Docker Compose
+• topic127-network bridge
+• Mosquitto MQTT broker
 • InfluxDB
 • Grafana
 • FUXA
-• Host-side Python services / project scripts
+• Optional Suricata security-demo
+• Host-side Python services
+• Cleanroom Sensor Simulator
 • Edge Gateway
-• Edge AI / ML anomaly analysis
-• OPC-UA simulator
-• Modbus simulator
-• Protocol validators
-• Supporting validation / reporting services
+• Custom rule-based Edge AI
+• MQTT-to-Influx writer
+• OPC-UA server
+• Modbus server
+• OPC-UA / Modbus validators
+• Recipe integrity
+• Supply-chain / ledger workflows
+• EHS
+• Audit / Incident / Compliance / Reporting
 
-[SIMULATED]
+[DEMONSTRATION / SIMULATED COMPONENTS]
+
 • Physical cleanroom sensors
 • Semiconductor manufacturing equipment
+• PLC hardware
 • Industrial machinery
-• PLC equipment
-These are represented by software simulators for the educational proof-of-concept.
+• Safety instrumentation
+• Industrial security traffic
 
-[DEMONSTRATION EXPOSURE]
-The listed EC2 ports represent the examination/demo environment and are not
-presented as a secure production firewall configuration.
+These are represented by software simulation and controlled test data.
 
-[TARGET / FUTURE]
-• Dedicated OT/IT network segmentation
-• Private subnets / restricted access
-• Hardened firewall rules
-• Encrypted industrial communications
-• Enterprise identity and access control
-• High availability
-• Production monitoring and centralized security operations
+[SEPARATE AI / ML DEMONSTRATIONS]
+
+• scikit-learn IsolationForest
+• TensorFlow/Keras Autoencoder
+
+These are executable project workflows and are not represented as one
+combined persistent ML network service.
+
 ========================================================================================================================
-LEGEND
-Dockerized service = Service running inside Docker Compose
-Host Service       = Python process / project component running on EC2 host
-:PORT              = Network endpoint / exposed service port
-↓                  = Processing / communication flow
-►                  = Network routing direction
-BOUNDARY           = Logical deployment / trust boundary
-*                  = Optional security-demo profile
+19. IMPORTANT DEPLOYMENT / NETWORK LIMITATIONS
+==============================================
+
+• Current implementation is a single EC2 host deployment.
+• Docker uses a bridge network rather than Kubernetes.
+• Industrial servers run as host-side Python processes.
+• FUXA runs in Docker and reaches host-side OPC-UA services through
+host.docker.internal.
+• The MQTT-to-Influx writer supports raw-topic standalone mode and
+validated-topic complete-lab mode.
+• The complete-lab runtime explicitly sets:
+MQTT_TOPIC=topic127/edge/validated
+• Custom Edge AI is rule-based inference.
+• scikit-learn and TensorFlow/Keras are separate demonstration workflows.
+• Suricata is controlled PCAP analysis rather than continuous production IDS.
+• Listed Security Group ports are examination/demo exposure, not a
+production firewall recommendation.
+
+========================================================================================================================
+20. RELATION TO A01 / A03 / A04 / A05 / A06
+===========================================
+
+A01 — SYSTEM ARCHITECTURE
+A02 places the functional components identified by A01 onto the
+current EC2 / Docker / host-Python deployment.
+
+A03 — DATA FLOW
+A02 identifies deployment endpoints and network placement;
+A03 remains authoritative for detailed data movement.
+
+A04 — PROCESS / OPERATIONAL WORKFLOWS
+A02 identifies where services execute;
+A04 remains authoritative for workflow sequence and demonstrations.
+
+A05 — SECURITY ARCHITECTURE
+A02 shows network exposure and deployment placement only;
+A05 remains authoritative for trust boundaries, security controls
+and security decision logic.
+
+A06 — CLOUD / HYBRID ARCHITECTURE
+A02 describes the current implemented EC2 deployment;
+A06 describes future evolution from the current deployment toward
+the hybrid/cloud target.
 
 IMPORTANT:
-Mosquitto is a MESSAGE BROKER and therefore provides publish/subscribe
-communication rather than acting as a single sequential pipeline stage.
-The implemented cleanroom telemetry architecture contains two primary
-MQTT processing paths from the raw telemetry topic:
 
-topic127/raw/cleanroom
-  ↓
-MQTT → InfluxDB Ingestion
-  ↓
-InfluxDB
-  ↓
-Grafana
+A02 deliberately does not claim Kubernetes, EKS, ECS, Lambda,
+AWS IoT Core, managed databases, managed Grafana, multi-AZ HA or
+other managed cloud services that are not implemented in this repository.
 
-topic127/raw/cleanroom
-  ↓
-Edge Gateway
-  ↓
-topic127/edge/validated
-  ↓
-Edge AI / ML Analysis
-  ↓
-Anomaly / Alert
+========================================================================================================================
+FINAL DEPLOYMENT STATEMENT
+==========================
 
-FUXA is represented as a separate operational HMI path to host-side
-industrial / OPC-UA services and is NOT shown as a downstream consumer
-of InfluxDB.
-The architecture reflects the CURRENT EDUCATIONAL DEPLOYMENT MODEL and does
-not claim to represent a production semiconductor fabrication network.
+CURRENT IMPLEMENTED DEPLOYMENT
+
+AWS EC2
++
+Ubuntu Linux
++
+Docker Compose
++
+Docker bridge network
++
+Host-side Python services
++
+Industrial protocol simulators
++
+Containerized monitoring / HMI infrastructure
++
+Controlled security demonstration
+=================================
+
+CURRENT TOPIC 127 DEPLOYMENT
+
+The architecture deliberately distinguishes:
+
+• containerized services
+• host-side Python services
+• Docker persistent data
+• host-side runtime/report outputs
+• industrial protocol endpoints
+• cleanroom telemetry paths
+• Custom Edge AI
+• separate AI/ML demonstrations
+• controlled IDS analysis
+• examination-only external exposure
+• future cloud/hybrid capabilities reserved for A06
+
+This A02 represents the CURRENT network and deployment architecture
+of exam-final-repo without claiming a Kubernetes cluster, a managed
+cloud-native platform or production network segmentation that is
+not implemented in the repository.
+
+========================================================================================================================
