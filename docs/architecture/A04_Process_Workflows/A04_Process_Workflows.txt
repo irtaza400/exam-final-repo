@@ -1,0 +1,1156 @@
+A04 — Topic 127 Process & Operational Workflow Architecture
+                TOPIC 127 — PROCESS / OPERATIONAL WORKFLOW ARCHITECTURE
+   Monitoring • Validation • Anomaly Response • Process Control • Recipe Integrity • Supply Chain • EHS
+             Cybersecurity • DevSecOps • Evidence • Audit • Compliance • Examination Orchestration
+========================================================================================================================
+
+IMPORTANT ARCHITECTURE RULE
+A04 shows HOW THE SYSTEM PROCESSES EVENTS AND PERFORMS OPERATIONAL WORKFLOWS.
+A01 = functional system components
+A02 = network / deployment placement
+A03 = data movement / information flow
+A04 = operational process / workflow logic
+A05 = security controls / trust boundaries
+A06 = current EC2 implementation → future cloud / hybrid target
+A04 deliberately distinguishes:
+• continuous services
+• event-driven decision workflows
+• controlled demonstrations
+• evidence-generation workflows
+• final examination orchestration
+========================================================================================================================
+
+1. MASTER OPERATIONAL WORKFLOW — EXAM-READY PLATFORM
+========================================================================================================================
+             TOPIC 127 EXAMINATION WORKFLOW
+                        │
+                        ▼
+           ┌───────────────────────────┐
+           │ PRE-FLIGHT / ENVIRONMENT  │
+           │                           │
+           │ • Repository validation   │
+           │ • Required-file checks    │
+           │ • Python / venv check     │
+           │ • pip dependency check    │
+           │ • Docker availability     │
+           │ • Compose configuration   │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+           ┌───────────────────────────┐
+           │ START INFRASTRUCTURE      │
+           │                           │
+           │ Docker Compose            │
+           │ • Mosquitto               │
+           │ • InfluxDB                │
+           │ • Grafana                 │
+           │ • FUXA                    │
+           │ • supporting services     │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+           ┌───────────────────────────┐
+           │ START MONITORING SERVICES │
+           │                           │
+           │ • Edge Gateway            │
+           │ • Custom Edge AI          │
+           │ • MQTT→Influx service     │
+           │ • Sensor simulator        │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+           ┌───────────────────────────┐
+           │ VERIFY LIVE MONITORING    │
+           │                           │
+           │ • MQTT reachable          │
+           │ • InfluxDB reachable      │
+           │ • Grafana reachable       │
+           │ • cleanroom data present  │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+           ┌───────────────────────────┐
+           │ START INDUSTRIAL SERVICES │
+           │                           │
+           │ • OPC-UA server           │
+           │ • Modbus server           │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+           ┌───────────────────────────┐
+           │ RUN PROJECT ORCHESTRATOR  │
+           │                           │
+           │ • ML anomaly detection    │
+           │ • Recipe integrity        │
+           │ • Supply chain            │
+           │ • EHS                     │
+           │ • Compliance              │
+           │ • Audit logging           │
+           │ • Incident aggregation    │
+           │ • Dashboard healthcheck   │
+           │ • DevSecOps               │
+           │ • Final report            │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+           ┌───────────────────────────┐
+           │ CONTROLLED DEMONSTRATIONS │
+           │                           │
+           │ • Recipe tamper           │
+           │ • Ledger tamper           │
+           │ • Ledger restoration      │
+           │ • Simulated blockchain    │
+           │ • FUXA evidence views     │
+           │ • Suricata IDS            │
+           │ • TensorFlow/Keras        │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+           ┌───────────────────────────┐
+           │ FINAL EVIDENCE REFRESH    │
+           │                           │
+           │ Compliance                │
+           │ Audit                     │
+           │ Incident summary          │
+           │ Dashboard health          │
+           │ DevSecOps                 │
+           │ Final project report      │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+           ┌───────────────────────────┐
+           │ EXAMINATION-READY STATE   │
+           │                           │
+           │ • Live monitoring active  │
+           │ • Reports generated       │
+           │ • Logs preserved          │
+           │ • Evidence available      │
+           └───────────────────────────┘
+========================================================================================================================
+2. CLEANROOM MONITORING / ANOMALY RESPONSE WORKFLOW
+========================================================================================================================
+            CLEANROOM SENSOR SIMULATOR
+                      │
+                      ▼
+             Generate telemetry
+                      │
+                      ▼
+          topic127/raw/cleanroom
+                      │
+                      ▼
+                 MOSQUITTO
+                      │
+                      ▼
+              EDGE GATEWAY
+                      │
+           ┌──────────┴──────────┐
+           │                     │
+           ▼                     ▼
+        VALID                 INVALID
+           │                     │
+           ▼                     ▼
+Enrich accepted telemetry     Reject message
+           │                     │
+           │                     ▼
+           │              topic127/edge/rejected
+           │
+           ▼
+  topic127/edge/validated
+           │
+           ▼
+      CUSTOM EDGE AI
+           │
+  ┌────────┴──────────────┐
+  │                       │
+  ▼                       ▼
+risk score           metric status
+  │                       │
+  └──────────┬────────────┘
+             │
+             ▼
+     severity decision
+             │
+   ┌─────────┼──────────────────┐
+   │         │                  │
+   ▼         ▼                  ▼
+ NORMAL    WARNING           CRITICAL
+   │         │                  │
+   ▼         ▼                  ▼
+Continue Investigate /       Immediate
+monitoring corrective action critical response
+   │         │                  │
+   └─────────┼──────────────────┘
+             │
+             ▼
+     AI RESULT / ALERT
+             │
+    ┌────────┴────────┐
+    │                 │
+    ▼                 ▼
+result topic      alert topic
+    │                 │
+    └────────┬────────┘
+             │
+             ▼
+   OPERATIONAL AI OUTPUT
+
+EDGE AI DECISION LOGIC
+Supported conditions include:
+particle_count
+temperature
+humidity
+airflow
+gas_ppm
+ppe_compliant
+
+Risk score:
+weighted active-metric score
+
+Severity:
+CRITICAL
+if risk score >= configured critical threshold
+OR any individual metric is critical
+
+WARNING
+if risk score >= configured warning threshold
+
+NORMAL
+otherwise
+
+CONFIGURED THRESHOLDS
+particle_count:
+warning = 800
+critical = 1200
+temperature:
+minimum = 18
+warning_high = 26
+critical_high = 30
+humidity:
+minimum = 35
+warning_high = 55
+critical_high = 65
+airflow:
+warning_low = 0.30
+critical_low = 0.20
+gas_ppm:
+warning = 50
+critical = 75
+PPE non-compliance:
+critical metric condition
+
+RECOMMENDED RESPONSES
+Particle anomaly
+→ inspect contamination source and filtration controls
+Airflow anomaly
+→ inspect airflow / pressure / ventilation
+Gas anomaly
+→ initiate EHS gas-safety verification
+PPE non-compliance
+→ suspend unsafe work until compliance restored
+Temperature / humidity anomaly
+→ verify environmental control and process conditions
+
+IMPORTANT:
+These are executable risk-analysis and recommendation workflows.
+They are not represented as autonomous physical actuation systems.
+========================================================================================================================
+3. MQTT-TO-INFLUX OPERATIONAL WORKFLOW
+========================================================================================================================
+                 SENSOR SIMULATOR
+                        │
+                        ▼
+               topic127/raw/cleanroom
+                        │
+                        ▼
+                   MQTT BROKER
+                        │
+      ┌─────────────────┴─────────────────┐
+      │                                   │
+      │ Standalone module default         │ Exam complete-lab runtime
+      ▼                                   ▼
+mqtt_to_influx.py default               run_complete_lab.sh
+TOPIC = raw/cleanroom                   overrides MQTT_TOPIC
+      │                                   │
+      ▼                                   ▼
+Raw telemetry                       validated topic
+                                          │
+                                          ▼
+                              MQTT → InfluxDB writer
+                                          │
+                                          ▼
+                                       InfluxDB
+                                          │
+                                          ▼
+                                       Grafana
+
+IMPORTANT REPOSITORY ACCURACY NOTE
+The Python module itself defaults to:
+topic127/raw/cleanroom
+The examination-oriented run_complete_lab.sh explicitly launches it with:
+MQTT_TOPIC=topic127/edge/validated
+Therefore:
+• standalone module behavior = raw-topic ingestion by default
+• complete-lab orchestration = validated-topic ingestion override
+A04 records this distinction explicitly rather than hiding the difference.
+========================================================================================================================
+4. PROJECT-ORCHESTRATOR WORKFLOW
+========================================================================================================================
+          MAIN PROJECT ORCHESTRATOR
+                    │
+                    ▼
+      ┌────────────────────────────┐
+      │ 1. ML ANOMALY ENGINE       │
+      └──────────────┬─────────────┘
+                     │
+                     ▼
+      ┌────────────────────────────┐
+      │ 2. RECIPE INTEGRITY CHECK  │
+      └──────────────┬─────────────┘
+                     │
+                     ▼
+      ┌────────────────────────────┐
+      │ 3. SUPPLY-CHAIN LEDGER     │
+      └──────────────┬─────────────┘
+                     │
+                     ▼
+      ┌────────────────────────────┐
+      │ 4. EHS INCIDENT ENGINE     │
+      └──────────────┬─────────────┘
+                     │
+                     ▼
+      ┌────────────────────────────┐
+      │ 5. COMPLIANCE REPORT       │
+      └──────────────┬─────────────┘
+                     │
+                     ▼
+      ┌────────────────────────────┐
+      │ 6. AUDIT LOGGER            │
+      └──────────────┬─────────────┘
+                     │
+                     ▼
+      ┌────────────────────────────┐
+      │ 7. INCIDENT MANAGER        │
+      └──────────────┬─────────────┘
+                     │
+                     ▼
+      ┌────────────────────────────┐
+      │ 8. DASHBOARD HEALTHCHECK   │
+      └──────────────┬─────────────┘
+                     │
+                     ▼
+      ┌────────────────────────────┐
+      │ 9. DEVSECOPS SCAN          │
+      └──────────────┬─────────────┘
+                     │
+                     ▼
+      ┌────────────────────────────┐
+      │ 10. FINAL PROJECT REPORT   │
+      └────────────────────────────┘
+
+IMPORTANT:
+The repository's project_orchestrator.py runs these commands sequentially
+with subprocess.run(..., check=False).
+A04 therefore depicts an execution sequence, not a transactional pipeline
+in which one module's success is required before the next module executes.
+========================================================================================================================
+5. OPC-UA PROCESS-CONTROL WORKFLOW
+========================================================================================================================
+             OPC-UA PROCESS SIMULATOR
+                      │
+                      ▼
+             OPC-UA SERVER :4840
+                      │
+                      ▼
+             READ PROCESS STATE
+                      │
+    ┌─────────────────┼─────────────────────┐
+    │                 │                     │
+    ▼                 ▼                     ▼
+  Recipe            Process               Setpoints
+    ID              Name                  / State
+    │                 │                     │
+    └─────────────────┼─────────────────────┘
+                      │
+                      ▼
+           OPC-UA CLIENT VALIDATOR
+                      │
+  ┌───────────────────┼────────────────────────┐
+  │                   │                        │
+  ▼                   ▼                        ▼
+Recipe ID valid    Process valid       Parameters valid
+  │                   │                        │
+  │                   │                  ┌─────┴─────────────┐
+  │                   │                  │                   │
+  │                   │                  ▼                   ▼
+  │                   │             Temperature          Pressure
+  │                   │             20–25 °C             0.90–1.10
+  │                   │                  │                   │
+  │                   │                  └─────────┬─────────┘
+  │                   │                            ▼
+  │                   │                       Etch time
+  │                   │                       55–65 sec
+  │                   │
+  │                   ▼
+  │              SecurityState
+  │              must be NORMAL
+  │
+  └──────────────────────┬─────────────────────┘
+                         │
+            ┌────────────┴────────────┐
+            │                         │
+            ▼                         ▼
+           PASS                    FINDINGS
+            │                         │
+            ▼                         ▼
+     Continue process             HIGH finding
+                                      │
+                                      ▼
+                              Recommended action:
+                              validate equipment state,
+                              verify recipe,
+                              pause affected process
+                              if required
+                                      │
+                                      ▼
+                 reports/process_security_incidents.csv
+
+SUPPORTED PRODUCTION-PROCESS FLOWS
+nanolithography
+deposition
+etching
+========================================================================================================================
+6. MODBUS / PLC CONTROL WORKFLOW
+========================================================================================================================
+           MODBUS PLC SIMULATOR
+                   │
+                   ▼
+            MODBUS SERVER :5020
+                   │
+                   ▼
+         READ HOLDING REGISTERS
+                   │
+      ┌────────────┼─────────────────────┐
+      │            │                     │
+      ▼            ▼                     ▼
+  Motor speed   Valve status        Pressure
+      │                                  │
+      ▼                                  ▼
+  Alarm code                         Recipe lock
+      │                                  │
+      └──────────────┬───────────────────┘
+                     │
+                     ▼
+           MODBUS CLIENT VALIDATOR
+                     │
+      ┌──────────────┼────────────────────┐
+      │              │                    │
+      ▼              ▼                    ▼
+ Motor speed  Chamber pressure       Alarm code
+   <= 1400         90–110               == 0
+      │              │                    │
+      └──────────────┼────────────────────┘
+                     │
+                 Recipe lock
+                   == 1
+                     │
+                     ▼
+            ┌────────┴────────┐
+            │                 │
+            ▼                 ▼
+           PASS            FINDINGS
+            │                 │
+            ▼                 ▼
+     Continue PLC       HIGH security finding
+     monitoring               │
+                              ▼
+                      Recommended action:
+                      check PLC register state,
+                      verify recipe lock,
+                      inspect chamber controls
+                              │
+                              ▼
+           reports/modbus_security_incidents.csv
+========================================================================================================================
+7. RECIPE INTEGRITY WORKFLOW
+========================================================================================================================
+             APPROVED RECIPE
+                   │
+                   ▼
+         Validate JSON structure
+                   │
+                   ▼
+         Verify original SHA-256
+                   │
+            ┌──────┴──────┐
+            │             │
+            ▼             ▼
+          VALID        INVALID
+            │             │
+            ▼             ▼
+     Create backup       Stop
+            │
+            ▼
+  Apply controlled unauthorized
+         JSON change
+            │
+            ▼
+      Keep JSON valid
+            │
+            ▼
+     Run integrity checker
+            │
+      ┌─────┴─────┐
+      │           │
+      ▼           ▼
+ HASH MATCH   HASH MISMATCH
+      │           │
+      ▼           ▼
+ Verified       Exit code 2
+                  │
+                  ▼
+          Tamper detected
+                  │
+                  ▼
+     Preserve tampered evidence
+                  │
+                  ▼
+     recipe_tamper_incidents.csv
+                  │
+                  ▼
+        Restore original recipe
+                  │
+                  ▼
+         Revalidate recipe
+                  │
+            ┌─────┴─────┐
+            │           │
+            ▼           ▼
+           PASS        FAIL
+            │           │
+            ▼           ▼
+     Demonstration     Investigation
+        complete
+
+CONTROLLED TAMPER SCRIPT CONTRACT
+Validator exit code:
+0 = recipe integrity verified
+1 = runtime/configuration failure
+2 = recipe tampering detected
+The wrapper treats exit code 2 as the EXPECTED security-detection outcome
+and ultimately returns success after detection, evidence generation,
+restoration and revalidation.
+========================================================================================================================
+8. SUPPLY-CHAIN / QMS WORKFLOW
+========================================================================================================================
+      ┌─────────────────────────────────────────┐
+      │ SUPPLIER REGISTRY + MATERIAL BATCHES    │
+      │             + RISK RULES                │
+      │                                         │
+      │ config/approved_suppliers.json          │
+      │ data/material_batches.json              │
+      │ config/material_risk_rules.json         │
+      └────────────────────┬────────────────────┘
+                           │
+             supplier / batch / rule context
+                           │
+                           ▼
+                SUPPLIER VALIDATION
+                           │
+          ┌────────────────┼─────────────────┐
+          │                │                 │
+          ▼                ▼                 ▼
+       Supplier         Status           Material scope
+       exists?          ACTIVE?          approved?
+          │                │                 │
+          └────────────────┼─────────────────┘
+                           │
+                           ▼
+                  MATERIAL RISK ENGINE
+                           │
+   ┌───────────────────────┼─────────────────────────────┐
+   │                       │                             │
+   ▼                       ▼                             ▼
+Certificate status      Quality status       Export / dual-use
+   │                       │                             │
+   └───────────────────────┼─────────────────────────────┘
+                           │
+                           ▼
+                      Country risk
+                           │
+                           ▼
+                       RISK SCORE
+                           │
+                           ▼
+               ┌───────────┴─────────────┐
+               │                         │
+               ▼                         ▼
+           Decision                Control action
+               │                         │
+       ┌───────┼─────────────────────────┐
+       │       │                         │
+       ▼       ▼                         ▼
+   APPROVE   QUARANTINE               REJECT /
+   FOR USE   + QMS REVIEW             LEGAL REVIEW
+       │       │                         │
+       └───────┼─────────────────────────┘
+               │
+               ▼
+         LEDGER RECORD
+               │
+               ▼
+      Hash-chain linkage
+        previous_hash
+        current_hash
+               │
+               ▼
+        LEDGER VERIFIER
+               │
+               ▼
+      VALID / INVALID CHAIN
+               │
+               ▼
+Supply-chain evidence / reports
+
+RISK DECISION BOUNDARIES
+0–39   → APPROVE_FOR_USE
+40–69  → QUARANTINE_AND_QMS_REVIEW
+70–100 → REJECT_OR_LEGAL_REVIEW
+
+ADDITIONAL WORKFLOW BEHAVIOUR
+Duplicate batch already present
+↓
+Skip duplicate
+↓
+Continue with remaining batches
+
+Existing ledger invalid before processing
+↓
+Stop supply-chain ledger generation
+↓
+Raise verification error
+========================================================================================================================
+9. LEDGER INTEGRITY / TAMPER WORKFLOW
+========================================================================================================================
+             VALID LEDGER
+                   │
+                   ▼
+            Verify chain
+                   │
+                   ▼
+                 VALID
+                   │
+                   ▼
+      Create controlled tampered copy
+                   │
+                   ▼
+       Modify first record material
+                   │
+                   ▼
+          Run ledger verifier
+                   │
+            ┌──────┴──────┐
+            │             │
+            ▼             ▼
+      TAMPER FOUND    NO TAMPER
+            │             │
+            ▼             ▼
+       Expected           FAIL
+      verifier code 2
+            │
+            ▼
+      Preserve tamper
+        report
+            │
+            ▼
+      Restore original
+         ledger
+            │
+            ▼
+      Verify restored
+          ledger
+            │
+      ┌─────┴─────┐
+      │           │
+      ▼           ▼
+     VALID       INVALID
+      │             │
+      ▼             ▼
+Workflow PASS     Investigation
+
+SIMULATED BLOCKCHAIN EVIDENCE WORKFLOW
+     Valid chain
+        │
+        ▼
+simulated_ledger_status
+        │
+        ▼
+      VALID
+        │
+        ▼
+Create tampered copy
+        │
+        ▼
+  Tamper status
+        │
+        ▼
+ TAMPER_DETECTED
+        │
+        ▼
+Remove tampered copy
+        │
+        ▼
+  Verify original
+        │
+        ▼
+      VALID
+        │
+        ▼
+Demonstration workflow PASS
+
+IMPORTANT:
+The project describes this as an educational single-node tamper-evident
+hash chain, not a distributed production blockchain.
+========================================================================================================================
+10. EHS / WORKER-SAFETY RESPONSE WORKFLOW
+========================================================================================================================
+            EHS EVENT DATA
+                 │
+                 ▼
+          EHS RULE ENGINE
+                 │
+  ┌──────────────┼─────────────────────────────┐
+  │              │                             │
+  ▼              ▼                             ▼
+Gas / PPE     Spill / Exposure          Waste / Emission
+  │              │                             │
+  └──────────────┼─────────────────────────────┘
+                 │
+                 ▼
+          ISSUE DETECTION
+                 │
+        ┌────────┴─────────┐
+        │                  │
+        ▼                  ▼
+    NO ISSUES           ISSUES
+        │                  │
+        ▼                  ▼
+     NORMAL         Severity classification
+        │                  │
+        │         ┌────────┴────────┐
+        │         │                 │
+        │         ▼                 ▼
+        │       HIGH             CRITICAL
+        │         │                 │
+        │         │                 ├── Evacuate zone
+        │         │                 ├── Isolate process
+        │         │                 └── Notify EHS team
+        │         │
+        │         ├── Stop local activity
+        │         ├── Raise incident ticket
+        │         └── Supervisor review
+        │
+        ▼
+Continue monitoring
+        │
+        ▼
+reports/ehs_incidents.csv
+
+IMPLEMENTED TRIGGERS
+gas_ppm > 50
+→ Hazardous gas exposure
+ppe_compliant == false
+→ PPE non-compliance
+spill_detected == true
+→ Chemical spill
+nanoparticle_exposure > 70
+→ High nanoparticle exposure
+waste_container_full == true
+→ Hazardous-waste condition
+emission_ppm > 70
+→ Emission threshold exceeded
+
+CRITICAL CONDITIONS
+gas_ppm > 50
+OR
+spill_detected == true
+→ CRITICAL
+
+OTHER DETECTED ISSUES
+If issues exist without the above critical conditions:
+→ HIGH
+
+IMPORTANT:
+The repository records the response as a generated recommendation/action;
+the software does not directly operate physical evacuation or isolation
+equipment.
+========================================================================================================================
+11. SCIKIT-LEARN ML DEMONSTRATION WORKFLOW
+========================================================================================================================
+            SYNTHETIC NORMAL BASELINE DATA
+                   +
+            SYNTHETIC DEMONSTRATION EVENTS
+                          │
+                          ▼
+                 Train IsolationForest
+                          │
+                          ▼
+                Evaluate demo events
+                          │
+          ┌───────────────┼──────────────┐
+          │               │              │
+          ▼               ▼              ▼
+     Particle          Environment     Safety
+     anomaly           anomaly         issue
+          │               │              │
+          └───────────────┼──────────────┘
+                          │
+                          ▼
+                 Rule-based reasons
+                          │
+                          ▼
+             ML statistical anomaly
+              added when detected
+                          │
+                          ▼
+                   Severity decision
+                          │
+            ┌─────────────┼─────────────┐
+            │             │             │
+            ▼             ▼             ▼
+         CRITICAL       HIGH          MEDIUM
+            │             │             │
+            └─────────────┼─────────────┘
+                          │
+                          ▼
+               Recommended remediation
+                          │
+                          ▼
+              reports/incidents.csv
+              reports/incidents.jsonl
+
+IMPLEMENTED DEMO EVENTS
+Lithography
+• particle_count = 1450
+• temperature = 27.4
+• humidity = 59
+• airflow = 0.24
+Etching
+• gas_ppm = 68
+• ppe_compliant = false
+Deposition
+• normal demonstration case
+
+SEVERITY RULE IN THIS MODULE
+gas_ppm > 50
+→ CRITICAL
+else particle_count > 1000
+→ HIGH
+else with reasons
+→ MEDIUM
+========================================================================================================================
+12. TENSORFLOW / KERAS WORKFLOW
+========================================================================================================================
+      SYNTHETIC NORMAL CLEANROOM
+         BASELINE DATA
+                │
+                ▼
+           Feature scaling
+                │
+                ▼
+          Train autoencoder
+                │
+                ▼
+     Calculate reconstruction error
+                │
+                ▼
+      95th-percentile threshold
+                │
+                ▼
+         Evaluate demo event
+                │
+         ┌──────┴───────┐
+         │              │
+         ▼              ▼
+      NORMAL         ANOMALY
+                        │
+                        ▼
+                     Severity
+                        │
+                        ▼
+              Recommended action
+                        │
+                        ▼
+     reports/tensorflow_anomaly_incidents.csv
+
+IMPORTANT:
+This is a separate executable TensorFlow/Keras demonstration workflow.
+It is not represented as a live downstream consumer of the production
+MQTT/InfluxDB stream.
+========================================================================================================================
+13. FUXA OPERATIONS WORKFLOW
+========================================================================================================================
+         OPC-UA PROCESS VARIABLES
+                   │
+                   ▼
+          FUXA BINDING CONFIG
+                   │
+                   ▼
+     Generate Operations Overview
+                   │
+                   ▼
+      topic127_operations_overview.json
+                   │
+                   ▼
+            Import into FUXA
+                   │
+                   ▼
+         Validate imported view
+                   │
+                   ▼
+           OPERATIONS VIEW
+                   │
+     ┌─────────────┼──────────────────┐
+     │             │                  │
+     ▼             ▼                  ▼
+  Recipe        Process            Setpoints
+  ID Name          │                  │
+     │             │                  ▼
+     ▼             ▼              Temp / Pressure /
+  Machine       Security          Etch time
+  Status        State
+
+The generated Operations Overview contains seven dynamic OPC-UA-driven
+items for:
+• Recipe ID
+• Process name
+• Temperature
+• Pressure
+• Etch time
+• Machine status
+• Security state
+
+FUXA validation workflow:
+Generate → Import → Validate → PASS / FAIL
+========================================================================================================================
+14. FUXA SIMULATED-LEDGER HEALTH WORKFLOW
+========================================================================================================================
+      SIMULATED-LEDGER STATUS REPORT
+      reports/simulated_ledger_status.json
+                     │
+                     ▼
+          PUBLISH LEDGER-HEALTH
+                METRICS
+                     │
+                     ▼
+                  InfluxDB
+                     │
+                     ▼
+         Generate FUXA ledger view
+                     │
+                     ▼
+              Import into FUXA
+                     │
+                     ▼
+               Validate view
+                     │
+                     ▼
+            LEDGER HEALTH HMI VIEW
+
+MASTER RUN SEQUENCE
+Supply-chain ledger
+↓
+verify ledger
+↓
+tamper demonstration
+↓
+restore ledger
+↓
+generate simulated-ledger status
+↓
+publish ledger-health metrics
+↓
+generate FUXA ledger-health view
+↓
+import
+↓
+validate
+
+IMPORTANT:
+The ledger-health publisher reads the examiner-facing
+reports/simulated_ledger_status.json status report and publishes
+a ledger_health measurement to InfluxDB.
+========================================================================================================================
+15. SURICATA INDUSTRIAL IDS WORKFLOW
+========================================================================================================================
+         CONTROLLED SECURITY INPUT
+                     │
+                     ▼
+         RUN SURICATA ANALYSIS
+                     │
+                     ▼
+            RULE MATCH / ALERT
+                     │
+   ┌─────────────────┼─────────────────┐
+   │                 │                 │
+   ▼                 ▼                 ▼
+OPC-UA Access   MQTT Payload      HMI Access
+   Attempt        Anomaly           Attempt
+   │                 │                 │
+   └─────────────────┼─────────────────┘
+                     │
+                     ▼
+             SECURITY FINDING
+                     │
+                     ▼
+             Suricata evidence
+========================================================================================================================
+16. DEVSECOPS WORKFLOW
+========================================================================================================================
+                 TOPIC 127 REPOSITORY
+                          │
+                          ▼
+                DEVSECOPS SCAN ENGINE
+                          │
+          ┌───────────────┼────────────────┐
+          │               │                │
+          ▼               ▼                ▼
+        BANDIT          SEMGREP           TRIVY
+          │               │                │
+          ▼               ▼                ▼
+       src scan        src scan      filesystem scan
+          │               │                │
+          └───────────────┼────────────────┘
+                          │
+                          ▼
+                Capture tool output
+                          │
+                          ▼
+           Write security scan summary
+                          │
+                          ▼
+        reports/security_scan_report.txt
+
+IMPORTANT:
+The current script records tool output and exit codes.
+A04 does not represent it as an automatic blocking CI/CD gate.
+========================================================================================================================
+17. CENTRAL INCIDENT MANAGEMENT WORKFLOW
+========================================================================================================================
+             CONFIGURED INCIDENT SOURCES
+                          │
+   ┌──────────────────────┼───────────────────────┐
+   │                      │                       │
+   ▼                      ▼                       ▼
+ML incidents        OPC-UA incidents       Modbus incidents
+   │                      │                       │
+   └──────────────────────┼───────────────────────┘
+                          │
+   ┌──────────────────────┼───────────────────────┐
+   │                      │                       │
+   ▼                      ▼                       ▼
+Recipe tamper          EHS incidents
+   │                      │
+   └──────────────┬───────┘
+                          │
+                          ▼
+                   INCIDENT MANAGER
+                          │
+                 ┌────────┴──────────┐
+                 │                   │
+                 ▼                   ▼
+          Source identify    Severity classify
+                 │                   │
+                 └────────┬──────────┘
+                          │
+                          ▼
+                   Central summary
+                          │
+                          ▼
+             reports/incident_summary.csv
+
+SEVERITY NORMALIZATION
+CRITICAL:
+"CRITICAL" / "TAMPER" / "GAS"
+HIGH:
+"HIGH" / "OUT OF" / "ALARM"
+MEDIUM:
+"MEDIUM"
+OTHER:
+INFO
+
+IMPORTANT:
+The Incident Manager aggregates its configured operational incident files.
+It is not an enterprise SIEM or universal evidence/event bus.
+========================================================================================================================
+18. AUDIT EVENT WORKFLOW
+========================================================================================================================
+          DEMONSTRATION CONTROL EVENTS
+                          │
+      ┌───────────────────┼────────────────────┐
+      │                   │                    │
+      ▼                   ▼                    ▼
+View dashboard       Validate recipe      Scan source code
+      │                   │                    │
+      ├───────────────────┼────────────────────┤
+      │                   │                    │
+      ▼                   ▼                    ▼
+ EHS incident        Verify supplier       Other defined
+   creation              batch               audit action
+      │                   │                    │
+      └───────────────────┼────────────────────┘
+                          │
+                          ▼
+                     AUDIT LOGGER
+                          │
+                          ▼
+               reports/audit_log.csv
+
+IMPLEMENTED EXAMPLE EVENTS
+operator
+→ view_dashboard
+→ grafana_cleanroom_dashboard
+process_validator
+→ validate_recipe
+→ approved_recipe.json
+security_engine
+→ scan_source_code
+→ src
+ehs_engine
+→ create_safety_incident
+→ etching_zone
+supply_chain
+→ verify_supplier_batch
+→ BATCH-003
+
+IMPORTANT:
+This is demonstration audit-event recording, not a live enterprise audit
+stream or SIEM pipeline.
+========================================================================================================================
+19. COMPLIANCE REPORTING WORKFLOW
+========================================================================================================================
+             DEFINED COMPLIANCE EVIDENCE
+                          │
+          ┌───────────────┼─────────────────────────┐
+          │               │                         │
+          ▼               ▼                         ▼
+   Cleanroom ML      OPC-UA process           Modbus process
+     incidents          security                 security
+          │               │                         │
+          ▼               ▼                         ▼
+    Recipe tamper     Supply-chain ledger      Supply-chain
+      incidents            JSON                 risk report
+          │               │                         │
+          └───────────────┼─────────────────────────┘
+                          │
+                          ▼
+                    EHS incidents
+                          │
+                          ▼
+                 COMPLIANCE REPORT ENGINE
+                          │
+                          ▼
+                 Evaluate evidence status
+                          │
+                          ▼
+            reports/compliance_report.md
+========================================================================================================================
