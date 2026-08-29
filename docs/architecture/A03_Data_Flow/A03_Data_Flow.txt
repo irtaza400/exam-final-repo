@@ -57,7 +57,7 @@ demonstration modules are one continuous production data pipeline.
                   │                             │
                   ▼                             ▼
 ========================================================================================================================
-2A. RAW MQTT → INFLUXDB → GRAFANA
+2A. STANDALONE / DEFAULT: RAW MQTT → INFLUXDB → GRAFANA
              ┌────────────────────────────────────────────┐
              │ MQTT → INFLUXDB INGESTION SERVICE          │
              │                                            │
@@ -112,8 +112,17 @@ demonstration modules are one continuous production data pipeline.
                           └────────────────────────┘
 
 IMPORTANT:
-The repository's MQTT-to-InfluxDB service subscribes directly to the
-RAW MQTT topic. It does not wait for Edge Gateway validation.
+
+STANDALONE / DEFAULT RUNTIME:
+mqtt_to_influx.py subscribes to:
+topic127/raw/cleanroom
+
+COMPLETE-LAB / EXAMINATION RUNTIME:
+run_complete_lab.sh overrides MQTT_TOPIC to:
+topic127/edge/validated
+
+Therefore the writer supports both runtime modes.
+This section represents the standalone/default raw-topic path.
 ========================================================================================================================
 2B. RAW MQTT → EDGE GATEWAY → VALIDATED / REJECTED / STATUS
                  topic127/raw/cleanroom
@@ -793,7 +802,7 @@ The final reporting layer is an evidence/report consolidation mechanism,
 not a universal real-time data bus.
 ========================================================================================================================
 15. COMPLETE DATA / GOVERNANCE FLOW
-A. LIVE CLEANROOM TELEMETRY
+A. CLEANROOM TELEMETRY — LOGICAL TOPOLOGY
 Cleanroom Sensor Simulator
 ↓
 topic127/raw/cleanroom
@@ -904,7 +913,10 @@ reports/final_project_report.md           Final evidence/report
 ========================================================================================================================
 18. DATA FLOW LIMITATIONS / ACCURACY NOTES
 • Mosquitto is a publish/subscribe broker, not a sequential processing step.
-• MQTT-to-InfluxDB ingestion subscribes directly to: topic127/raw/cleanroom
+• Standalone/default MQTT-to-InfluxDB input:
+  topic127/raw/cleanroom
+• Complete-lab MQTT-to-InfluxDB input:
+  topic127/edge/validated
 • Edge Gateway independently subscribes to: topic127/raw/cleanroom
 • Edge Gateway publishes: topic127/edge/validated, topic127/edge/rejected, topic127/edge/status
 • Custom Edge AI consumes: topic127/edge/validated
@@ -923,15 +935,16 @@ reports/final_project_report.md           Final evidence/report
 19. IMPLEMENTATION BOUNDARY
 [DIRECTLY IMPLEMENTED DATA FLOWS]
 • Sensor simulator → raw MQTT topic
-• Raw MQTT → MQTT-to-InfluxDB ingestion
+• MQTT telemetry → MQTT-to-InfluxDB ingestion (raw by default; validated in complete-lab)
 • Raw MQTT → Edge Gateway
 • Edge Gateway → validated MQTT
+• Complete-lab validated runtime → MQTT-to-InfluxDB → InfluxDB
 • Edge Gateway → rejected MQTT
 • Edge Gateway → status MQTT
 • Validated MQTT → Custom Edge AI
 • Edge AI → result MQTT
 • Edge AI → alert MQTT
-• Raw telemetry → InfluxDB → Grafana
+• MQTT telemetry → MQTT-to-InfluxDB ingestion → InfluxDB → Grafana
 • OPC-UA simulator → OPC-UA server → OPC-UA validator
 • Modbus simulator → Modbus server → Modbus validator
 • Recipe → SHA-256 comparison → tamper report
