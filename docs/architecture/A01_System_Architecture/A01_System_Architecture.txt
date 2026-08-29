@@ -1,473 +1,601 @@
 A01 — Topic 127 Final System Architecture Diagram
 
 ========================================================================================================================
-                  TOPIC 127 — ADVANCED NANOTECHNOLOGY MANUFACTURING SECURITY PLATFORM
-      Cleanroom Monitoring • Process Control • Environmental Safety • Supply Chain • Cybersecurity • Compliance
-========================================================================================================================
+TOPIC 127 — ADVANCED NANOTECHNOLOGY MANUFACTURING SECURITY PLATFORM
+Cleanroom Monitoring • Process Control • Environmental Safety • Supply Chain • Cybersecurity • Compliance
+=========================================================================================================
 
-
-                                      ┌─────────────────────────────────────────────┐
-                                      │     TOPIC 127 MANUFACTURING ENVIRONMENT     │
-                                      │                                             │
-                                      │ Educational / Simulated Proof-of-Concept    │
-                                      │ Real executable software controls +         │
-                                      │ controlled demonstration inputs             │
-                                      └──────────────────────┬──────────────────────┘
+```
+                                  ┌─────────────────────────────────────────────┐
+                                  │     TOPIC 127 MANUFACTURING ENVIRONMENT     │
+                                  │                                             │
+                                  │ Educational / Simulated Proof-of-Concept   │
+                                  │ Executable software controls + controlled   │
+                                  │ demonstration inputs                       │
+                                  └──────────────────────────┬──────────────────┘
                                                              │
-                         ┌───────────────────────────────────┴───────────────────────────────────┐
-                         │                                                                       │
-                         ▼                                                                       ▼
-             ┌──────────────────────────┐                                            ┌──────────────────────────┐
-             │ CLEANROOM SENSOR         │                                            │ INDUSTRIAL PROCESS       │
-             │ SIMULATOR                │                                            │ SIMULATORS               │
-             │                          │                                            │                          │
-             │ • Particle count         │                                            │ • Nanolithography        │
-             │ • Temperature            │                                            │ • Deposition             │
-             │ • Humidity               │                                            │ • Airflow                │
-             │ • Gas                    │                                            │ • Etching                │
-             │ • PPE compliance         │                                            │ • Process parameters     │
-             └─────────────┬────────────┘                                            │ • Equipment state        │
-                           │                                                         └─────────────┬────────────┘
-                           │ Raw telemetry                                                         │
-                           │                                                                       │
-                           ▼                                                                       ▼
-             ┌──────────────────────────┐                                            ┌──────────────────────────┐
-             │      MOSQUITTO MQTT      │                                            │ INDUSTRIAL PROTOCOL      │
-             │          BROKER          │                                            │         SERVICES         │
-             │                          │                                            │                          │
-             │ topic127/raw/cleanroom   │                                            │ • OPC-UA Server          │
-             │ Publish / Subscribe      │                                            │ • Modbus Server          │
-             └─────────────┬────────────┘                                            └─────────────┬────────────┘
-                           │                                                                       │
-             ┌─────────────┴─────────────┐                                           ┌──────────────┴──────────────┐
-             │                           │                                           │                             │
-             ▼                           ▼                                           ▼                             ▼
-┌──────────────────────────┐┌──────────────────────────┐              ┌──────────────────────────┐┌──────────────────────────┐
-│ MQTT → INFLUXDB          ││ EDGE GATEWAY             │              │ OPC-UA CLIENT            ││ MODBUS CLIENT            │
-│ INGESTION SERVICE        ││                          │              │ VALIDATOR                ││ VALIDATOR                │
-│                          ││ • Validation             │              │                          ││                          │
-│ Stores telemetry         ││ • Enrichment             │              │ • Recipe ID              ││ • Motor speed            │
-│ in time-series database  ││ • Routing                │              │ • Process name           ││ • Chamber pressure       │
-└─────────────┬────────────┘└────────────┬─────────────┘              │ • Setpoints              ││ • Alarm code             │
-              │                          │                            │ • Security state         ││ • Recipe lock            │
-              │                          │                            └────────────┬─────────────┘└────────────┬─────────────┘
-              │                          │                                         │                           │
-              ▼                          ▼                                         ▼                           ▼
-┌──────────────────────────┐┌──────────────────────────┐              ┌──────────────────────────┐┌──────────────────────────┐
-│ INFLUXDB                 ││ VALIDATED MQTT           │              │ PROCESS SECURITY         ││ PROCESS SECURITY         │
-│ TIME-SERIES STORAGE      ││                          │              │ FINDINGS                 ││ FINDINGS                 │
-│                          ││ topic127/edge/validated  │              │                          ││                          │
-│ cleanroom_monitoring     │└────────────┬─────────────┘              │ process_security_        ││ modbus_security_         │
-└─────────────┬────────────┘             │                            │ incidents.csv            ││ incidents.csv            │
-              │                          │                            └────────────┬─────────────┘└────────────┬─────────────┘
-              │                          │                                         │                           │
-              │                          ▼                                         └──────────────┬────────────┘
-              │              ┌──────────────────────────┐                                         │
-              │              │ CUSTOM EDGE AI ENGINE    │                                         │
-              │              │                          │                                         │
-              │              │ Rule-based risk scoring  │                                         │
-              │              │ Severity classification  │                                         │
-              │              │ Recommended actions      │                                         │
-              │              └────────────┬─────────────┘                                         │
-              │                           │                                                       │
-              │                 ┌─────────┴─────────┐                                             │
-              │                 │                   │                                             │
-              │                 ▼                   ▼                                             │
-              │       topic127/edge/ai/result topic127/edge/ai/alert                             │
-              │                 │                   │                                             │
-              │                 └─────────┬─────────┘                                             │
-              │                           │                                                       │
-              ▼                           ▼                                                       │
-┌──────────────────────────┐┌──────────────────────────┐                                         │
-│ GRAFANA                  ││ AI RESULT / ALERT        │◄─────────────────────────────────────────┘
-│                          ││                          │
-│ • Cleanroom telemetry    ││ • Risk score             │
-│ • Environmental trends   ││ • Severity               │
-│ • Operational metrics    ││ • Recommended action     │
-│ • Ledger health          ││ • Incident evidence      │
-└──────────────────────────┘└──────────────────────────┘
+                     ┌───────────────────────────────────────┴───────────────────────────────────────┐
+                     │                                                                               │
+                     ▼                                                                               ▼
 
+         ┌──────────────────────────┐                                            ┌──────────────────────────┐
+         │ CLEANROOM SENSOR         │                                            │ INDUSTRIAL PROCESS       │
+         │ SIMULATOR                │                                            │ SIMULATORS               │
+         │                          │                                            │                          │
+         │ • Particle count         │                                            │ • Nanolithography        │
+         │ • Temperature            │                                            │ • Deposition             │
+         │ • Humidity               │                                            │ • Etching                │
+         │ • Airflow                │                                            │ • Process parameters     │
+         │ • Gas                    │                                            │ • Equipment state        │
+         │ • PPE compliance         │                                            │                          │
+         └─────────────┬────────────┘                                            └─────────────┬────────────┘
+                       │                                                                      │
+                       │ Raw telemetry                                                        │ Process variables
+                       ▼                                                                      ▼
+
+         ┌──────────────────────────┐                                            ┌──────────────────────────┐
+         │      MOSQUITTO MQTT      │                                            │ INDUSTRIAL PROTOCOL      │
+         │          BROKER          │                                            │         SERVICES         │
+         │                          │                                            │                          │
+         │ topic127/raw/cleanroom   │                                            │ • OPC-UA Server          │
+         │ Publish / Subscribe      │                                            │ • Modbus Server          │
+         └─────────────┬────────────┘                                            └─────────────┬────────────┘
+                       │                                                                      │
+              ┌────────┴────────┐                                                ┌────────────┴────────────┐
+              │                 │                                                │                         │
+              ▼                 ▼                                                ▼                         ▼
+
+   ┌────────────────────┐ ┌────────────────────┐                    ┌────────────────────┐ ┌────────────────────┐
+   │ MQTT → INFLUXDB    │ │ EDGE GATEWAY       │                    │ OPC-UA CLIENT      │ │ MODBUS CLIENT      │
+   │ INGESTION SERVICE  │ │                    │                    │ VALIDATOR          │ │ VALIDATOR          │
+   │                    │ │ • Validation       │                    │                    │ │                    │
+   │ Raw telemetry      │ │ • Enrichment       │                    │ • Recipe ID        │ │ • Motor speed      │
+   │ ingestion          │ │ • Routing          │                    │ • Process name     │ │ • Pressure         │
+   └─────────┬──────────┘ └─────────┬──────────┘                    │ • Setpoints        │ │ • Alarm code       │
+             │                      │                               │ • Security state  │ │ • Recipe lock      │
+             ▼                      ▼                               └─────────┬──────────┘ └─────────┬──────────┘
+
+   ┌────────────────────┐ ┌────────────────────┐                                  │                       │
+   │ INFLUXDB           │ │ VALIDATED MQTT     │                                  ▼                       ▼
+   │ TIME-SERIES        │ │                    │                     ┌────────────────────┐ ┌────────────────────┐
+   │ STORAGE            │ │ topic127/edge/     │                     │ OPC-UA PROCESS     │ │ MODBUS PROCESS     │
+   │                    │ │ validated          │                     │ SECURITY FINDINGS  │ │ SECURITY FINDINGS  │
+   │ cleanroom_         │ └─────────┬──────────┘                     │ Evidence output   │ │ Evidence output   │
+   │ monitoring         │           │                                └────────────────────┘ └────────────────────┘
+   └─────────┬──────────┘           │
+             │                      ▼
+             ▼           ┌────────────────────────────┐
+   ┌────────────────────┐│ CUSTOM EDGE AI ENGINE      │
+   │ GRAFANA            ││                            │
+   │                    ││ Rule-based risk scoring   │
+   │ • Cleanroom        ││ Severity classification   │
+   │ • Environmental    ││ Recommended actions       │
+   │ • Operational      │└──────────────┬─────────────┘
+   │ • Ledger health    │               │
+   └────────────────────┘      ┌────────┴────────┐
+                               │                 │
+                               ▼                 ▼
+                     topic127/edge/ai/result   topic127/edge/ai/alert
+                               │                 │
+                               └────────┬────────┘
+                                        ▼
+                          ┌────────────────────────────┐
+                          │ AI RESULT / ALERT OUTPUT   │
+                          │                            │
+                          │ • Risk score               │
+                          │ • Severity                 │
+                          │ • Abnormal metrics         │
+                          │ • Recommended action       │
+                          └────────────────────────────┘
+```
+
+IMPORTANT ARCHITECTURAL RELATIONSHIP:
+
+The following paths are independent functional paths.
+
+1. CLEANROOM TELEMETRY PATH
+
+   Sensor Simulator
+   ↓
+   topic127/raw/cleanroom
+   ↓
+   Mosquitto
+   ├──► MQTT → InfluxDB Ingestion → InfluxDB Storage → Grafana
+   │
+   └──► Edge Gateway → topic127/edge/validated → Custom Edge AI
+   ├──► AI Result
+   └──► AI Alert
+
+2. INDUSTRIAL PROCESS SECURITY PATH
+
+   OPC-UA Simulator → OPC-UA Server → OPC-UA Client Validator
+   → Process Security Evidence
+
+   Modbus Simulator → Modbus Server → Modbus Client Validator
+   → Process Security Evidence
+
+The process-security paths do NOT feed the Custom Edge AI output.
 
 ========================================================================================================================
-                                      PARALLEL AI / ML DEMONSTRATION PATHS
+PARALLEL AI / ML DEMONSTRATION PATHS
+====================================
+
+IMPORTANT:
+
+scikit-learn IsolationForest and TensorFlow/Keras Autoencoder are separate
+executable demonstration workflows.
+
+They are NOT represented as:
+
+InfluxDB → scikit-learn
+MQTT → TensorFlow/Keras
+Edge AI → TensorFlow/Keras
+
+They use their own synthetic / demonstration datasets.
+
+```
+                     ┌───────────────────────────────────────┐
+                     │ SYNTHETIC / DEMONSTRATION CLEANROOM   │
+                     │ DATA                                  │
+                     │                                       │
+                     │ • Particle count                      │
+                     │ • Temperature                         │
+                     │ • Humidity                            │
+                     │ • Airflow                             │
+                     │ • Gas                                 │
+                     │ • PPE compliance                      │
+                     └──────────────────────┬────────────────┘
+                                            │
+                           ┌────────────────┴────────────────┐
+                           │                                 │
+                           ▼                                 ▼
+              ┌────────────────────────┐        ┌────────────────────────┐
+              │ SCIKIT-LEARN           │        │ TENSORFLOW / KERAS     │
+              │ ISOLATIONFOREST        │        │ AUTOENCODER            │
+              │                        │        │                        │
+              │ Normal baseline        │        │ Normal training data   │
+              │ + demo events          │        │ + demo events          │
+              └────────────┬───────────┘        └────────────┬───────────┘
+                           │                                 │
+                           ▼                                 ▼
+              ┌────────────────────────┐        ┌────────────────────────┐
+              │ ML ANOMALY DECISION    │        │ Reconstruction error   │
+              │ + rule explanations    │        │ + threshold decision   │
+              └────────────┬───────────┘        └────────────┬───────────┘
+                           │                                 │
+                           ▼                                 ▼
+              reports/incidents.csv             reports/tensorflow_
+              reports/incidents.jsonl            anomaly_incidents.csv
+```
+
 ========================================================================================================================
+RECIPE INTEGRITY
+================
 
- IMPORTANT:
- scikit-learn and TensorFlow/Keras are separate executable demonstration workflows.
- They are NOT represented as downstream consumers of InfluxDB or the live MQTT pipeline.
+```
+             ┌──────────────────────────────┐
+             │ APPROVED RECIPE              │
+             │ data/approved_recipe.json    │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │ SHA-256 INTEGRITY CHECK      │
+             │                              │
+             │ Current hash compared with   │
+             │ approved reference hash      │
+             └──────────────┬───────────────┘
+                            │
+                 ┌──────────┴──────────┐
+                 │                     │
+                 ▼                     ▼
+            HASH MATCH            HASH MISMATCH
+                 │                     │
+                 ▼                     ▼
+       Integrity verified       Tamper detected
+                                       │
+                                       ▼
+                           recipe_tamper_incidents.csv
+```
 
+========================================================================================================================
+SUPPLY-CHAIN SECURITY
+=====================
 
-        ┌───────────────────────────────────────┐
-        │ SYNTHETIC / DEMONSTRATION CLEANROOM   │
-        │ DATA                                  │
-        │                                       │
-        │ particle_count                        │
-        │ temperature                           │
-        │ humidity                              │
-        │ airflow                               │
-        │ gas_ppm                               │
-        │ PPE compliance                        │
-        └──────────────────────┬────────────────┘
+```
+             ┌──────────────────────────────┐
+             │ SUPPLIER REGISTRY            │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │ MATERIAL BATCH DATA          │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │ SUPPLIER VALIDATION          │
+             │                              │
+             │ • Supplier exists            │
+             │ • ACTIVE status              │
+             │ • Approved material          │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │ MATERIAL RISK ENGINE         │
+             │                              │
+             │ • Certificate status         │
+             │ • Quality status             │
+             │ • Export / dual-use risk     │
+             │ • Country risk               │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │ RISK / QMS DECISION          │
+             │                              │
+             │ 0–39   → APPROVE_FOR_USE     │
+             │ 40–69  → QUARANTINE / QMS    │
+             │ 70–100 → REJECT / LEGAL      │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │ HASH-CHAINED TRACEABILITY    │
+             │ LEDGER                       │
+             │                              │
+             │ previous_hash                │
+             │ current_hash                 │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │ LEDGER VERIFICATION          │
+             │                              │
+             │ Integrity / tamper detection │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+                   Supply-chain evidence
+```
+
+========================================================================================================================
+EHS / WORKER SAFETY
+===================
+
+```
+             ┌──────────────────────────────┐
+             │ EHS EVENT DATA               │
+             │                              │
+             │ • Gas exposure               │
+             │ • PPE non-compliance         │
+             │ • Chemical spill             │
+             │ • Nanoparticle exposure      │
+             │ • Hazardous waste condition  │
+             │ • Emission threshold         │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │ EHS INCIDENT ENGINE           │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │ SEVERITY / RESPONSE LOGIC    │
+             │                              │
+             │ NORMAL / HIGH / CRITICAL     │
+             │ Generates recommended action │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+                   EHS safety evidence
+                            │
+                            ▼
+                 reports/ehs_incidents.csv
+```
+
+IMPORTANT:
+EHS responses are generated recommendations / evidence.
+The repository does not directly actuate physical evacuation or isolation systems.
+
+========================================================================================================================
+CYBERSECURITY / IDS
+===================
+
+```
+             ┌──────────────────────────────┐
+             │ CONTROLLED SECURITY INPUT    │
+             │                              │
+             │ Supplied / generated PCAP    │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │ SURICATA IDS DEMONSTRATION   │
+             │                              │
+             │ Optional security-demo       │
+             │ profile                      │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+                      Rule match / alert
+                            │
+                 ┌──────────┼──────────┐
+                 │          │          │
+                 ▼          ▼          ▼
+              OPC-UA      MQTT       FUXA/HMI
+               :4840      :1883        :1881
+                 │          │          │
+                 └──────────┼──────────┘
+                            │
+                            ▼
+                     Security evidence
+```
+
+IMPORTANT:
+Suricata is a controlled PCAP/security demonstration,
+not continuous enterprise network monitoring.
+
+========================================================================================================================
+DEVSECOPS
+=========
+
+```
+                ┌─────────────────────────────┐
+                │ TOPIC 127 REPOSITORY        │
+                └──────────────┬──────────────┘
                                │
-                  ┌────────────┴────────────┐
-                  │                         │
-                  ▼                         ▼
-        ┌──────────────────────┐  ┌────────────────────────┐
-        │ SCIKIT-LEARN         │  │ TENSORFLOW / KERAS     │
-        │ ISOLATIONFOREST      │  │ AUTOENCODER            │
-        │                      │  │                        │
-        │ Normal baseline      │  │ Normal training data   │
-        │ + demo events        │  │ + demonstration events │
-        └──────────┬───────────┘  └───────────┬────────────┘
-                   │                         │
-                   ▼                         ▼
-        ┌──────────────────────┐  ┌────────────────────────┐
-        │ ML ANOMALY DECISION  │  │ Reconstruction error   │
-        │ + rule explanations  │  │ + threshold decision   │
-        └──────────┬───────────┘  └───────────┬────────────┘
-                   │                         │
-                   ▼                         ▼
-        reports/incidents.csv     reports/tensorflow_
-        reports/incidents.jsonl   anomaly_incidents.csv
-
-
-========================================================================================================================
-                                         PROCESS / INTEGRITY DOMAINS
-========================================================================================================================
-
-┌──────────────────────────────────┐    ┌──────────────────────────────────┐
-│ RECIPE INTEGRITY                 │    │ SUPPLY CHAIN SECURITY            │
-│                                  │    │                                  │
-│ Approved recipe                  │    │ Supplier registry                │
-│        ↓                         │    │        ↓                         │
-│ SHA-256 reference                │    │ Material batch data              │
-│        ↓                         │    │        ↓                         │
-│ Current hash comparison          │    │ Supplier validation              │
-│        ↓                         │    │        ↓                         │
-│ VALID / TAMPERED                 │    │ Material risk assessment         │
-│        ↓                         │    │        ↓                         │
-│ recipe_tamper_incidents.csv      │    │ Risk decision                    │
-└──────────────┬───────────────────┘    │        ↓                         │
-               │                        │ Hash-chained ledger              │
-               │                        │        ↓                         │
-               │                        │ Ledger verification              │
-               │                        │        ↓                         │
-               │                        │ Supply-chain evidence            │
-               │                        └──────────────┬───────────────────┘
-               │                                       │
-               └──────────────────────┬────────────────┘
-                                      │
-                                      ▼
-                      DOMAIN-SPECIFIC SECURITY EVIDENCE
-
-
-========================================================================================================================
-                                      EHS / WORKER SAFETY
-========================================================================================================================
-
-              ┌───────────────────────────────────────────────┐
-              │ EHS EVENT DATA                                │
-              │                                               │
-              │ • Gas exposure                                │
-              │ • PPE non-compliance                          │
-              │ • Chemical spill                              │
-              │ • Nanoparticle exposure                       │
-              │ • Hazardous waste condition                   │
-              │ • Emission threshold                          │
-              └──────────────────────────┬────────────────────┘
-                                         │
-                                         ▼
-                         ┌───────────────────────────────┐
-                         │ EHS INCIDENT ENGINE           │
-                         └────────────────┬───────────────┘
-                                          │
-                                          ▼
-                         ┌───────────────────────────────┐
-                         │ SEVERITY / RESPONSE LOGIC     │
-                         │                               │
-                         │ NORMAL / HIGH / CRITICAL      │
-                         │                               │
-                         │ Generates recommended action │
-                         └────────────────┬───────────────┘
-                                          │
-                                          ▼
-                              EHS SAFETY EVIDENCE
-                                          │
-                                          ▼
-                              reports/ehs_incidents.csv
-
-IMPORTANT:
-EHS actions are software-generated recommendations / evidence.
-The repository does NOT directly actuate physical evacuation or isolation systems.
-
-
-========================================================================================================================
-                                    CYBERSECURITY / IDS
-========================================================================================================================
-
-              ┌─────────────────────────────────────────────┐
-              │ CONTROLLED SECURITY TEST INPUT              │
-              │                                             │
-              │ Supplied / generated industrial PCAP        │
-              └──────────────────────────┬──────────────────┘
-                                         │
-                                         ▼
-                         ┌───────────────────────────────┐
-                         │ SURICATA IDS DEMONSTRATION    │
-                         │                               │
-                         │ Optional security-demo        │
-                         │ profile                       │
-                         └────────────────┬───────────────┘
-                                          │
-                                          ▼
-                              RULE MATCH / ALERT
-                                          │
-                         ┌────────────────┼────────────────┐
-                         │                │                │
-                         ▼                ▼                ▼
-                       OPC-UA           MQTT            FUXA/HMI
-                       :4840            :1883            :1881
-                         │                │                │
-                         └────────────────┼────────────────┘
-                                          │
-                                          ▼
-                                  SECURITY EVIDENCE
-
-IMPORTANT:
-Suricata is used as a controlled PCAP/security demonstration,
-not as continuous enterprise network monitoring.
-
-
-========================================================================================================================
-                                      DEVSECOPS
-========================================================================================================================
-
-                      ┌────────────────────────────┐
-                      │ TOPIC 127 REPOSITORY       │
-                      └─────────────┬──────────────┘
-                                    │
-                                    ▼
-                      ┌────────────────────────────┐
-                      │ DEVSECOPS SCAN ENGINE      │
-                      └─────────────┬──────────────┘
-                                    │
-                        ┌───────────┼───────────┐
-                        │           │           │
-                        ▼           ▼           ▼
-                      BANDIT     SEMGREP      TRIVY
-                        │           │           │
-                        └───────────┼───────────┘
-                                    │
-                                    ▼
-                          SECURITY SCAN OUTPUT
-                                    │
-                                    ▼
-                    reports/security_scan_report.txt
+                               ▼
+                ┌─────────────────────────────┐
+                │ DEVSECOPS SCAN ENGINE       │
+                └──────────────┬──────────────┘
+                               │
+                  ┌────────────┼────────────┐
+                  │            │            │
+                  ▼            ▼            ▼
+               BANDIT       SEMGREP        TRIVY
+                  │            │            │
+                  └────────────┼────────────┘
+                               │
+                               ▼
+                     Security scan output
+                               │
+                               ▼
+              reports/security_scan_report.txt
+```
 
 IMPORTANT:
 The current implementation records scan output and exit codes.
 It is not represented as an automatic CI/CD blocking gate.
 
+========================================================================================================================
+OPERATIONS / VISUALIZATION
+==========================
+
+```
+   ┌──────────────────────────────┐       ┌──────────────────────────────┐
+   │ GRAFANA                      │       │ FUXA                         │
+   │                              │       │                              │
+   │ • Cleanroom monitoring       │       │ • HMI / SCADA-style view     │
+   │ • Environmental trends       │       │ • OPC-UA process variables   │
+   │ • Operational metrics        │       │ • Recipe / process status    │
+   │ • AI anomaly evidence        │       │ • Machine / security state  │
+   │ • Ledger health              │       │                              │
+   └──────────────────────────────┘       └──────────────────────────────┘
+```
+
+FUXA operational relationship:
+
+OPC-UA Process Variables
+↓
+FUXA OPC-UA Tag Configuration
+↓
+FUXA Operations View
+
+Ledger-health relationship:
+
+Supply-chain ledger verification
+↓
+Simulated-ledger status evidence
+↓
+Ledger-health metrics
+↓
+InfluxDB
+↓
+Grafana / FUXA evidence view
 
 ========================================================================================================================
-                                    OPERATIONS / VISUALIZATION
-========================================================================================================================
+INCIDENT / EVIDENCE GOVERNANCE
+==============================
 
-      ┌─────────────────────────────┐        ┌─────────────────────────────┐
-      │ GRAFANA                     │        │ FUXA                        │
-      │                             │        │                             │
-      │ Cleanroom monitoring        │        │ HMI / SCADA-style view      │
-      │ Environmental trends        │        │ OPC-UA process variables    │
-      │ AI anomaly evidence         │        │ Recipe / process status     │
-      │ Ledger health               │        │ Machine / security state    │
-      └─────────────────────────────┘        └─────────────────────────────┘
+IMPORTANT:
+The repository does NOT implement one universal enterprise evidence bus.
 
+INCIDENT MANAGER — CONFIGURED OPERATIONAL SOURCES
 
- FUXA operational path:
+reports/incidents.csv
+reports/process_security_incidents.csv
+reports/modbus_security_incidents.csv
+reports/recipe_tamper_incidents.csv
+reports/ehs_incidents.csv
+│
+▼
+┌──────────────────────────┐
+│ INCIDENT MANAGER         │
+│                          │
+│ • Source identification  │
+│ • Severity normalization │
+│ • Aggregation            │
+└─────────────┬────────────┘
+│
+▼
+reports/incident_summary.csv
 
- OPC-UA Process Variables
-           ↓
- FUXA OPC-UA Tag Configuration
-           ↓
- FUXA Operations View
+AUDIT PATH
 
+Demonstration operational / control events
+↓
+Audit Logger
+↓
+reports/audit_log.csv
 
- Ledger-health visualization path:
+COMPLIANCE PATH
 
- Supply-chain ledger verification
-           ↓
- Simulated-ledger status evidence
-           ↓
- Ledger-health metrics
-           ↓
- InfluxDB
-           ↓
- Grafana / FUXA evidence view
+Defined compliance evidence set
+↓
+Compliance Report Generator
+↓
+reports/compliance_report.md
 
+FINAL PROJECT REPORT PATH
 
-========================================================================================================================
-                                    INCIDENT / EVIDENCE GOVERNANCE
-========================================================================================================================
+Broader project evidence set
+↓
+Final Report Generator
+↓
+reports/final_project_report.md
 
- IMPORTANT:
- The repository does NOT implement one universal enterprise evidence bus.
-
-                         CONFIGURED INCIDENT SOURCES
-                                      │
-          ┌───────────────────────────┼─────────────────────────────┐
-          │                           │                             │
-          ▼                           ▼                             ▼
- reports/incidents.csv     process_security_incidents.csv  modbus_security_incidents.csv
-          │                           │                             │
-          └───────────────────────────┼─────────────────────────────┘
-                                      │
-          ┌───────────────────────────┴─────────────────────────────┐
-          │                                                         │
-          ▼                                                         ▼
- recipe_tamper_incidents.csv                               ehs_incidents.csv
-          │                                                         │
-          └───────────────────────────┬─────────────────────────────┘
-                                      │
-                                      ▼
-                           ┌────────────────────────┐
-                           │ INCIDENT MANAGER       │
-                           │                        │
-                           │ Source identification  │
-                           │ Severity normalization │
-                           │ Aggregation            │
-                           └────────────┬───────────┘
-                                        │
-                                        ▼
-                            reports/incident_summary.csv
-
-
- AUDIT PATH:
-
- Demonstration operational / control events
-                     ↓
-                Audit Logger
-                     ↓
-         reports/audit_log.csv
-
-
- COMPLIANCE PATH:
-
- Defined seven-file evidence set
-                     ↓
-        Compliance Report Generator
-                     ↓
-        reports/compliance_report.md
-
-
- FINAL REPORT PATH:
-
- Broader project evidence set
-                     ↓
-          Final Report Generator
-                     ↓
-        reports/final_project_report.md
-
+IMPORTANT:
+Incident aggregation, audit logging, compliance reporting and final
+project reporting are separate implemented mechanisms.
 
 ========================================================================================================================
-                                      MAIN FUNCTIONAL RELATIONSHIP VIEW
+MAIN FUNCTIONAL RELATIONSHIP VIEW
+=================================
+
+CLEANROOM TELEMETRY
+
+Sensor Simulator
+↓
+topic127/raw/cleanroom
+↓
+Mosquitto
+├────────► MQTT → InfluxDB Ingestion
+│                     ↓
+│                  InfluxDB
+│                     ↓
+│                  Grafana
+│
+└────────► Edge Gateway
+↓
+topic127/edge/validated
+↓
+Custom Edge AI
+┌────┴────┐
+▼         ▼
+AI Result  AI Alert
+
+INDUSTRIAL PROCESS SECURITY
+
+OPC-UA Simulator
+↓
+OPC-UA Server
+↓
+OPC-UA Validator
+↓
+Process Security Evidence
+
+Modbus Simulator
+↓
+Modbus Server
+↓
+Modbus Validator
+↓
+Process Security Evidence
+
+RECIPE
+
+Approved Recipe
+↓
+SHA-256 Integrity Check
+↓
+Valid / Tampered
+↓
+Recipe Tamper Evidence
+
+SUPPLY CHAIN
+
+Supplier Registry + Material Batches
+↓
+Supplier Validation
+↓
+Material Risk Engine
+↓
+Risk Decision
+↓
+Hash-Chained Ledger
+↓
+Ledger Verification
+↓
+Supply-Chain Evidence
+
+EHS
+
+EHS Event Data
+↓
+EHS Incident Engine
+↓
+Severity / Response Recommendation
+↓
+EHS Evidence
+
+CYBERSECURITY
+
+Controlled PCAP
+↓
+Suricata
+↓
+Rule Match / Security Finding
+↓
+Security Evidence
+
+DEVSECOPS
+
+Repository
+↓
+Bandit / Semgrep / Trivy
+↓
+Security Scan Evidence
+
+GOVERNANCE
+
+Operational incident sources
+↓
+Incident Manager
+↓
+Incident summary
+
+Demonstration control events
+↓
+Audit Logger
+↓
+Audit log
+
+Defined compliance evidence
+↓
+Compliance Report Generator
+↓
+Compliance report
+
+Broader project evidence
+↓
+Final Report Generator
+↓
+Final project report
+
 ========================================================================================================================
-
- CLEANROOM TELEMETRY:
-
- Sensor Simulator
-      ↓
- topic127/raw/cleanroom
-      ↓
- Mosquitto
-      ├──────────────────────────────► MQTT → InfluxDB → InfluxDB → Grafana
-      │
-      └──────────────────────────────► Edge Gateway
-                                           ↓
-                                  topic127/edge/validated
-                                           ↓
-                                     Custom Edge AI
-                                           ↓
-                                  AI result / alert topics
-
-
- INDUSTRIAL PROCESS:
-
- OPC-UA Simulator ──► OPC-UA Server ──► OPC-UA Validator ──► Process Security Evidence
-
- Modbus Simulator ──► Modbus Server ──► Modbus Validator ──► Modbus Security Evidence
-
-
- RECIPE:
-
- Approved Recipe ──► SHA-256 Integrity Check ──► Valid / Tampered
-                                                 └──► Recipe Tamper Evidence
-
-
- SUPPLY CHAIN:
-
- Supplier Registry + Material Batches
-                  ↓
-         Supplier Validation
-                  ↓
-         Material Risk Engine
-                  ↓
-          Risk Decision
-                  ↓
-        Hash-Chained Ledger
-                  ↓
-         Ledger Verification
-                  ↓
-        Supply-Chain Evidence
-
-
- EHS:
-
- EHS Event Data
-      ↓
- EHS Incident Engine
-      ↓
- Severity / Response Recommendation
-      ↓
- EHS Evidence
-
-
- CYBERSECURITY:
-
- Controlled PCAP
-      ↓
- Suricata
-      ↓
- Rule Match / Security Finding
-      ↓
- Security Evidence
-
-
- DEVSECOPS:
-
- Repository
-      ↓
- Bandit / Semgrep / Trivy
-      ↓
- Security Scan Evidence
-
-
- GOVERNANCE:
-
- Independent Evidence Products
-      ├── Incident Summary
-      ├── Audit Log
-      ├── Compliance Report
-      └── Final Project Report
-
-
-========================================================================================================================
-                                      ARCHITECTURE BOUNDARIES
-========================================================================================================================
+ARCHITECTURE BOUNDARIES
+=======================
 
 [IMPLEMENTED]
+
 • Cleanroom sensor simulation
 • Raw MQTT telemetry
+• Mosquitto messaging
 • Edge Gateway validation / enrichment / routing
+• Validated MQTT
 • Custom rule-based Edge AI
 • MQTT → InfluxDB ingestion
 • InfluxDB time-series storage
@@ -477,6 +605,7 @@ It is not represented as an automatic CI/CD blocking gate.
 • Modbus PLC simulation / validation
 • SHA-256 recipe integrity
 • Supply-chain validation / risk / hash-chain ledger
+• Ledger verification
 • EHS incident engine
 • Suricata controlled IDS demonstration
 • Bandit / Semgrep / Trivy
@@ -486,6 +615,7 @@ It is not represented as an automatic CI/CD blocking gate.
 • Final Report Generator
 
 [SIMULATED / CONTROLLED]
+
 • Physical cleanroom sensors
 • Semiconductor manufacturing equipment
 • PLC hardware
@@ -494,21 +624,23 @@ It is not represented as an automatic CI/CD blocking gate.
 • Physical safety systems
 • Production chemical infrastructure
 
-[IMPORTANT ARCHITECTURAL LIMITATIONS]
+[IMPORTANT LIMITATIONS]
+
 • Custom Edge AI is rule-based inference, not a trained ML model.
 • scikit-learn and TensorFlow/Keras are separate demonstration workflows.
-• They are not represented as direct InfluxDB downstream consumers.
+• scikit-learn and TensorFlow/Keras are not direct InfluxDB downstream consumers.
 • Suricata is not continuous enterprise IDS monitoring.
 • Incident Manager is not a universal evidence bus.
 • Audit Logger is not a live enterprise SIEM/SOAR stream.
 • Compliance reporting does not provide regulatory certification.
-• EHS and industrial response actions are generated recommendations / evidence.
+• EHS and industrial responses are generated recommendations / evidence.
 • The supply-chain ledger is a single-node educational hash chain.
-
+• The platform is an educational proof-of-concept, not a production
+semiconductor fabrication control system.
 
 ========================================================================================================================
-                                      RELATION TO A02–A06
-========================================================================================================================
+RELATION TO A02–A06
+===================
 
 A01 — SYSTEM ARCHITECTURE
 Answers:
@@ -532,19 +664,19 @@ Answers:
 
 A06 — CLOUD / HYBRID ARCHITECTURE
 Answers:
-"How does the current EC2 implementation evolve toward a future hybrid/cloud target?"
+"How does the current EC2 implementation evolve toward a future
+hybrid/cloud target?"
 
 A01 is the functional-system view.
-A02 is authoritative for physical/deployment placement.
+A02 is authoritative for deployment/network placement.
 A03 is authoritative for data movement.
 A04 is authoritative for workflow execution.
 A05 is authoritative for security/control boundaries.
 A06 is authoritative for current-to-target deployment evolution.
 
-
 ========================================================================================================================
-                                              FINAL STATEMENT
-========================================================================================================================
+FINAL ARCHITECTURAL STATEMENT
+=============================
 
 Topic 127 is implemented as a collection of integrated but independently
 implemented functional capabilities:
@@ -576,20 +708,22 @@ Industrial IDS Demonstration
 DevSecOps
 +
 Incident / Audit / Compliance / Final Evidence
-=
+==============================================
+
 Topic 127 Educational Manufacturing Security Platform
 
 The architecture deliberately distinguishes:
-• live implemented services
-• host-side and containerized components
-• independent demonstration workflows
-• security and governance evidence
-• simulated / controlled inputs
-• recommended responses
-• future production capabilities
 
-This A01 represents the CURRENT functional architecture of exam-final-repo
-without claiming a universal data bus, autonomous physical actuation,
-enterprise SOC/SIEM operation, or production manufacturing certification.
+• LIVE IMPLEMENTED SERVICES
+• INDEPENDENT DEMONSTRATION WORKFLOWS
+• SECURITY / SAFETY CONTROLS
+• EVIDENCE / GOVERNANCE MECHANISMS
+• SIMULATED / CONTROLLED INPUTS
+• RECOMMENDED RESPONSE ACTIONS
+• FUTURE PRODUCTION CAPABILITIES NOT CLAIMED
+
+This A01 represents the CURRENT functional architecture of
+exam-final-repo and is designed to remain consistent with the repository's
+source code, configuration, scripts and evidence outputs.
 
 ========================================================================================================================
