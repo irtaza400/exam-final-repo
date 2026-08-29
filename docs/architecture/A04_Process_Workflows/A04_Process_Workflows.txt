@@ -99,8 +99,11 @@ A04 deliberately distinguishes:
            │ • Recipe tamper           │
            │ • Ledger tamper           │
            │ • Ledger restoration      │
-           │ • Simulated blockchain    │
-           │ • FUXA evidence views     │
+           │ • Supply-chain ledger     │
+           │   tamper demonstration    │
+           │ • FUXA Operations Overview │
+           │ • FUXA ledger-health      │
+           │   evidence view           │
            │ • Suricata IDS            │
            │ • TensorFlow/Keras        │
            └─────────────┬─────────────┘
@@ -177,7 +180,7 @@ risk score           metric status
    │         │                  │
    ▼         ▼                  ▼
 Continue Investigate /       Immediate
-monitoring corrective action critical response
+monitoring corrective action critical-response recommendation
    │         │                  │
    └─────────┼──────────────────┘
              │
@@ -741,9 +744,9 @@ Gas / PPE     Spill / Exposure          Waste / Emission
         │         ▼                 ▼
         │       HIGH             CRITICAL
         │         │                 │
-        │         │                 ├── Evacuate zone
-        │         │                 ├── Isolate process
-        │         │                 └── Notify EHS team
+        │         │                 ├── Recommend evacuation / zone response
+        │         │                 ├── Recommend process isolation
+        │         │                 └── Notify / escalate to EHS response team
         │         │
         │         ├── Stop local activity
         │         ├── Raise incident ticket
