@@ -256,9 +256,9 @@ TRUST BOUNDARY 5 — EHS / WORKER SAFETY
                      ▼                            ▼
                 HIGH / OTHER                  CRITICAL
                      │                            │
-                     │                            ├── Evacuate zone
-                     │                            ├── Isolate process
-                     │                            └── Notify EHS response team
+                     │                            ├── Recommend evacuation / zone response
+                     │                            ├── Recommend process isolation
+                     │                            └── Notify / escalate to EHS response team
                      │
                      ▼
               EHS safety evidence
@@ -331,7 +331,8 @@ Implementation scope:
 • Trivy performs filesystem security scanning for HIGH/CRITICAL findings
 ========================================================================================================================
 TRUST BOUNDARY 8 — AI / ML ANALYTICS
-            CLEANROOM / ENVIRONMENTAL FEATURE SET
+            SYNTHETIC / DEMONSTRATION CLEANROOM
+            ENVIRONMENTAL FEATURE SET
                            │
          ┌─────────────────┼──────────────────────┐
          │                 │                      │
@@ -430,10 +431,10 @@ LOGICAL SECURITY / SAFETY DECISION VIEW
       ▼            ▼                   ▼
    NORMAL        REVIEW             CRITICAL
       │            │                   │
-      │            ├── QMS review      ├── Block / isolate
-      │            ├── Investigation   ├── Emergency action
-      │            └── Verification    ├── Restore integrity
-      │                                └── Security response
+      │            ├── QMS review      ├── Recommended control action
+      │            ├── Investigation   ├── Recommended emergency action
+      │            └── Verification    ├── Integrity restoration
+      │                                └── Security response / escalation
       │
       ▼
 Continue monitoring
@@ -515,7 +516,7 @@ standalone logger. It is NOT represented as a live enterprise SIEM,
 SOAR platform, or universal event-bus implementation.
 ========================================================================================================================
 COMPLIANCE / GOVERNANCE LAYER
-                       EVIDENCE FILES / STATUS
+                       IMPLEMENTED COMPLIANCE EVIDENCE
                                   │
    ┌──────────────────────────────┼───────────────────────────────┐
    │                              │                               │
@@ -526,8 +527,8 @@ incident evidence              reports                         evidence
    ├──────────────────────────────┼───────────────────────────────┤
    │                              │                               │
    ▼                              ▼                               ▼
-Supply Chain                   EHS incident                    Supporting evidence
-ledger / risk                  evidence / report               and audit records
+Supply Chain                   EHS incident                    Compliance
+ledger / risk                  evidence / report               evidence set
    │                              │                               │
    └──────────────────────────────┼───────────────────────────────┘
                                   │
@@ -542,18 +543,25 @@ ledger / risk                  evidence / report               and audit records
                                     ▼
                       reports/compliance_report.md
 
-Compliance mapping in the current repository covers themes including:
-• ISO 14644-style cleanroom monitoring
-• ISO 14001-style environmental management
-• OSHA / worker-safety-style evidence
-• EPA-style environmental evidence
-• IEC 62443 / ICS security themes
-• Supply-chain security
+DIRECT IMPLEMENTED INPUTS:
+• reports/incidents.csv
+• reports/process_security_incidents.csv
+• reports/modbus_security_incidents.csv
+• reports/recipe_tamper_incidents.csv
+• reports/supply_chain_ledger.json
+• reports/supply_chain_risk_report.csv
+• reports/ehs_incidents.csv
+
+SEPARATE GOVERNANCE / SUPPORTING EVIDENCE:
+• reports/audit_log.csv
+• reports/incident_summary.csv
+• reports/security_scan_report.txt
 
 IMPORTANT:
-The compliance generator produces laboratory evidence/status mapping and
-reporting. It does NOT independently calculate regulatory compliance,
-provide certification, or submit legal regulatory filings.
+The Compliance Report Generator reads the defined compliance evidence
+files above. Audit logging, incident aggregation and DevSecOps scan output
+remain separate governance/evidence products; they are not represented as
+direct inputs to the current compliance generator.
 ========================================================================================================================
 SECURITY CONTROL → EVIDENCE MATRIX
 
