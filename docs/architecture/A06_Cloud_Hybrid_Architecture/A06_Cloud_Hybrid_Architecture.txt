@@ -1,56 +1,930 @@
-A06 — CLOUD / HYBRID ARCHITECTURE
+A06 — Topic 127 Cloud / Hybrid Architecture
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          CURRENT IMPLEMENTATION                             │
-│                                AWS CLOUD                                    │
-│                                                                             │
-│   ┌─────────────────────────────────────────────────────────────────────┐   │
-│   │                          AWS EC2 INSTANCE                           │   │
-│   │                            Ubuntu Linux                             │   │
-│   │                                                                     │   │
-│   │   ┌──────────────────────────────┐   ┌───────────────────────────┐   │   │
-│   │   │       DOCKER / COMPOSE       │   │    HOST PYTHON RUNTIME    │   │   │
-│   │   │                              │   │                           │   │   │
-│   │   │  topic127-network            │   │  Edge Gateway             │   │   │
-│   │   │  • Mosquitto                 │   │  Edge AI / ML             │   │   │
-│   │   │  • InfluxDB                  │   │  MQTT → Influx            │   │   │
-│   │   │  • Grafana                   │   │  Sensor Simulator         │   │   │
-│   │   │  • FUXA                      │   │  OPC-UA Server            │   │   │
-│   │   │  • Suricata*                 │   │  Modbus Server            │   │   │
-│   │   │                              │   │  Validators / Reports     │   │   │
-│   │   └──────────────┬───────────────┘   └──────────────┬────────────┘   │   │
-│   │                  │                                  │                │   │
-│   │                  └──────────────┬───────────────────┘                │   │
-│   │                                 │                                    │   │
-│   │                       Topic 127 Platform                             │   │
-│   │                                 │                                    │   │
-│   │               Docker volumes / runtime evidence                      │   │
-│   └─────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
-│   Demo Security Group: 22 / 3000 / 8086 / 1883 / 4840 / 5020                │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-                                       │ TARGET EVOLUTION
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                             FUTURE HYBRID TARGET                            │
-│                                                                             │
-│   ┌──────────────────────────────┐     ┌────────────────────────────────┐   │
-│   │        OT / EDGE SITE        │     │     CENTRAL CLOUD PLATFORM     │   │
-│   │                              │     │                                │   │
-│   │ Sensors / PLCs / Equipment   │     │ Central telemetry              │   │
-│   │ Local MQTT / Gateway         │◄───►│ Long-term data / analytics      │   │
-│   │ Local Edge AI                │     │ Central monitoring             │   │
-│   │ Local safety response        │     │ Security operations            │   │
-│   │ Local industrial protocols   │     │ Compliance / evidence          │   │
-│   └──────────────────────────────┘     │ Enterprise identity            │   │
-│                                        │ High availability              │   │
-│                                        └────────────────────────────────┘   │
-│                                                                             │
-│              Future controls: private networking • OT/IT segmentation       │
-│                   encryption • restricted access • centralized security operations          │
-└─────────────────────────────────────────────────────────────────────────────┘
+```
+              TOPIC 127 — CLOUD / HYBRID ARCHITECTURE
+   Current EC2 Implementation • Edge/OT Placement • Cloud Evolution • Hybrid Target
+```
 
-* Suricata = optional security-demo profile
-CURRENT = IMPLEMENTED
-FUTURE HYBRID = TARGET / NOT CURRENTLY DEPLOYED
+========================================================================================================================
+
+IMPORTANT ARCHITECTURE RULE
+
+A06 describes:
+
+• WHERE the current Topic 127 platform is deployed
+• HOW the current EC2 implementation can evolve toward a hybrid architecture
+• WHICH workloads should remain close to the manufacturing / OT environment
+• WHICH workloads can be centralized in a future cloud platform
+• The boundary between CURRENT IMPLEMENTATION and FUTURE TARGET
+
+A01 = functional system architecture
+A02 = network / deployment placement
+A03 = data movement / information flow
+A04 = operational process / workflow execution
+A05 = security controls / trust boundaries
+A06 = current EC2 implementation → future cloud / hybrid evolution
+
+IMPORTANT:
+
+A06 does NOT replace A01–A05.
+
+A01–A05 remain authoritative for their respective architectural concerns.
+
+========================================================================================================================
+
+1. ARCHITECTURAL EVOLUTION
+   ========================================================================================================================
+
+The Topic 127 platform follows a controlled evolution model:
+
+CURRENT IMPLEMENTATION
+│
+▼
+AWS EC2 / Ubuntu
+│
+├── Docker Compose
+├── Docker bridge network
+├── Host-side Python services
+├── Industrial protocol simulators
+├── Monitoring / visualization
+├── AI / ML demonstrations
+└── Security / evidence workflows
+│
+▼
+FUTURE HYBRID TARGET
+│
+├── OT / EDGE SITE
+│
+└── CENTRAL CLOUD PLATFORM
+
+IMPORTANT:
+
+The future hybrid architecture is a TARGET ARCHITECTURE.
+
+It is NOT currently deployed by this repository.
+
+========================================================================================================================
+2. CURRENT IMPLEMENTED CLOUD DEPLOYMENT
+=======================================
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                      CURRENT IMPLEMENTATION                                                          │
+│                                           AWS CLOUD                                                                  │
+│                                                                                                                      │
+│  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                                      AWS EC2 INSTANCE                                                            │  │
+│  │                                      Ubuntu Linux                                                               │  │
+│  │                                                                                                                │  │
+│  │  ┌──────────────────────────────────────────────┐    ┌────────────────────────────────────────────────────────┐ │  │
+│  │  │             DOCKER / COMPOSE                │    │              HOST-SIDE PYTHON RUNTIME                 │ │  │
+│  │  │                                              │    │                                                        │ │  │
+│  │  │  topic127-network                            │    │  Cleanroom Sensor Simulator                           │ │  │
+│  │  │                                              │    │  Edge Gateway                                            │ │  │
+│  │  │  • Mosquitto                                │    │  Custom Edge AI                                          │ │  │
+│  │  │  • InfluxDB                                 │    │  MQTT → InfluxDB writer                                 │ │  │
+│  │  │  • Grafana                                  │    │  OPC-UA Server                                           │ │  │
+│  │  │  • FUXA                                     │    │  Modbus Server                                           │ │  │
+│  │  │  • Suricata*                                │    │  OPC-UA / Modbus validators                              │ │  │
+│  │  │                                              │    │  Recipe integrity                                         │ │  │
+│  │  │  * security-demo profile                    │    │  Supply-chain / ledger                                  │ │  │
+│  │  │                                              │    │  EHS / safety                                            │ │  │
+│  │  │                                              │    │  Audit / Incident / Compliance                          │ │  │
+│  │  │                                              │    │  DevSecOps                                               │ │  │
+│  │  │                                              │    │  scikit-learn demonstration                              │ │  │
+│  │  │                                              │    │  TensorFlow/Keras demonstration                          │ │  │
+│  │  └──────────────────────────┬───────────────────┘    └───────────────────────────┬────────────────────────────┘ │  │
+│  │                             │                                                      │                              │  │
+│  │                             └──────────────────────┬───────────────────────────────┘                              │  │
+│  │                                                    │                                                              │  │
+│  │                                          Topic 127 Platform                                                     │  │
+│  │                                                    │                                                              │  │
+│  │                                   Persistent / runtime evidence                                                 │  │
+│  └────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────┘  │
+│                                                       │                                                               │
+│                       Demonstration exposure: 22 / 3000 / 8086 / 1883 / 4840 / 5020                                │
+└───────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────┘
+│
+│ FUTURE EVOLUTION
+▼
+
+========================================================================================================================
+3. CURRENT DEPLOYMENT CHARACTERISTICS
+=====================================
+
+CURRENTLY IMPLEMENTED:
+
+• AWS EC2
+• Ubuntu Linux
+• Docker Engine / Docker Compose
+• Docker bridge network: topic127-network
+• Mosquitto MQTT broker
+• InfluxDB
+• Grafana
+• FUXA
+• Optional Suricata security-demo
+• Host-side Python services
+• Cleanroom sensor simulator
+• Edge Gateway
+• Custom rule-based Edge AI
+• MQTT-to-InfluxDB writer
+• OPC-UA server
+• Modbus server
+• OPC-UA / Modbus validators
+• Recipe integrity checker
+• Supply-chain / material-risk workflows
+• Hash-chained ledger
+• EHS incident engine
+• Audit / incident / compliance workflows
+• DevSecOps scanning
+• scikit-learn IsolationForest demonstration
+• TensorFlow/Keras Autoencoder demonstration
+
+CURRENT DEPLOYMENT MODEL:
+
+```
+                AWS EC2
+                   │
+      ┌────────────┴────────────┐
+      │                         │
+      ▼                         ▼
+```
+
+Docker / Compose          Host Python Runtime
+│                         │
+▼                         ▼
+topic127-network          Industrial / analytics /
+│                evidence services
+│                         │
+└────────────┬────────────┘
+│
+▼
+Topic 127 Platform
+
+IMPORTANT:
+
+The repository does NOT currently implement:
+
+• Kubernetes
+• Amazon EKS
+• Amazon ECS
+• AWS Lambda
+• AWS IoT Core
+• Amazon Timestream
+• Managed Grafana
+• Managed Kafka
+• Multi-node Kubernetes
+• Multi-AZ application deployment
+• Cloud-native service mesh
+• Production-grade cloud HA
+
+These are not represented as current implementation components.
+
+========================================================================================================================
+4. CURRENT CONTAINER / HOST PLACEMENT
+=====================================
+
+DOCKER / COMPOSE:
+
+┌──────────────────────────────────────────────┐
+│ topic127-network                             │
+│                                              │
+│ Mosquitto :1883                              │
+│ InfluxDB :8086                               │
+│ Grafana :3000                                │
+│ FUXA :1881                                   │
+│ Suricata*                                    │
+└──────────────────────────────────────────────┘
+
+HOST-SIDE PYTHON:
+
+┌──────────────────────────────────────────────┐
+│ AWS EC2 / Ubuntu                             │
+│                                              │
+│ Cleanroom Sensor Simulator                   │
+│ Edge Gateway                                 │
+│ Custom Edge AI                               │
+│ MQTT → InfluxDB writer                       │
+│ OPC-UA Server :4840                          │
+│ Modbus Server :5020                          │
+│ OPC-UA Validator                             │
+│ Modbus Validator                             │
+│ Recipe Integrity                             │
+│ Supply Chain / Ledger                        │
+│ EHS                                           │
+│ Audit / Incident / Compliance                │
+│ DevSecOps                                    │
+│ scikit-learn demonstration                   │
+│ TensorFlow/Keras demonstration               │
+└──────────────────────────────────────────────┘
+
+IMPORTANT:
+
+The current implementation deliberately separates:
+
+• containerized infrastructure
+• host-side application / Python services
+• industrial protocol endpoints
+• persistent Docker data
+• host-side runtime / report outputs
+
+========================================================================================================================
+5. CURRENT TELEMETRY AND EDGE ARCHITECTURE
+==========================================
+
+CLEANROOM SENSOR SIMULATOR
+│
+│ topic127/raw/cleanroom
+▼
+MOSQUITTO MQTT
+│
+├───────────────────────────────┐
+│                               │
+▼                               ▼
+EDGE GATEWAY                    MQTT → INFLUXDB
+│                               │
+│ validated                     ▼
+│                         INFLUXDB
+▼                               │
+topic127/edge/validated                 ▼
+│                             GRAFANA
+▼
+CUSTOM EDGE AI
+│
+├──► topic127/edge/ai/result
+│
+└──► topic127/edge/ai/alert
+
+IMPORTANT:
+
+Custom Edge AI is a separate rule-based inference service.
+
+It is NOT represented as the same component as the repository's
+scikit-learn or TensorFlow/Keras demonstration workflows.
+
+========================================================================================================================
+6. SEPARATE AI / ML DEMONSTRATION WORKLOADS
+===========================================
+
+The repository contains separate executable AI / ML demonstrations.
+
+A06 therefore preserves the same distinction established by A01–A05.
+
+```
+                SYNTHETIC / DEMONSTRATION DATA
+                           │
+             ┌─────────────┴─────────────┐
+             │                           │
+             ▼                           ▼
+    SCIKIT-LEARN                    TENSORFLOW / KERAS
+    ISOLATIONFOREST                AUTOENCODER
+             │                           │
+             ▼                           ▼
+    Anomaly decision             Reconstruction error
+             │                           │
+             ▼                           ▼
+    Incident evidence             Anomaly evidence
+```
+
+IMPORTANT:
+
+These are separate executable demonstration workflows.
+
+They are NOT represented as:
+
+InfluxDB → scikit-learn
+
+MQTT → TensorFlow
+
+Edge AI → TensorFlow
+
+or as one combined production ML platform.
+
+========================================================================================================================
+7. INDUSTRIAL / OT SERVICES
+===========================
+
+CURRENT IMPLEMENTATION:
+
+```
+                AWS EC2 HOST
+                     │
+         ┌───────────┴───────────┐
+         │                       │
+         ▼                       ▼
+   OPC-UA Server           Modbus Server
+      :4840                    :5020
+         │                       │
+         ▼                       ▼
+  OPC-UA Validator        Modbus Validator
+         │                       │
+         ▼                       ▼
+  Process Security       PLC Security Evidence
+      Evidence
+```
+
+FUXA:
+
+OPC-UA Server
+│
+▼
+FUXA OPC-UA Tags
+│
+▼
+FUXA HMI / SCADA-style View
+
+IMPORTANT:
+
+The industrial equipment, PLCs and physical process are simulated.
+
+The current repository does not deploy physical semiconductor manufacturing
+equipment or physical OT infrastructure.
+
+========================================================================================================================
+8. CURRENT SECURITY / GOVERNANCE POSITION
+=========================================
+
+A05 remains authoritative for security controls and trust boundaries.
+
+A06 therefore represents security-related deployment evolution only.
+
+CURRENT:
+
+```
+                CURRENT EC2 PLATFORM
+                       │
+         ┌─────────────┼──────────────┐
+         │             │              │
+         ▼             ▼              ▼
+   Recipe Integrity  Suricata     DevSecOps
+         │             │              │
+         ▼             ▼              ▼
+   Security Evidence / Reports / Audit Outputs
+```
+
+Additional controls include:
+
+• Edge telemetry validation
+• OPC-UA process validation
+• Modbus register validation
+• Recipe SHA-256 integrity verification
+• Supply-chain supplier validation
+• Material risk assessment
+• Hash-chained traceability ledger
+• EHS incident analysis
+• Controlled IDS demonstration
+• Bandit
+• Semgrep
+• Trivy
+• Audit logging
+• Incident aggregation
+• Compliance evidence generation
+
+IMPORTANT:
+
+A06 does not claim that the current EC2 deployment provides
+enterprise-grade zero-trust, HA, multi-region security or
+continuous production IDS.
+
+========================================================================================================================
+9. CURRENT DATA / EVIDENCE STORAGE
+==================================
+
+CURRENT STORAGE MODEL:
+
+DOCKER PERSISTENT DATA
+│
+├── Mosquitto data
+├── Mosquitto logs
+├── InfluxDB data
+└── Grafana data
+
+HOST / REPOSITORY OUTPUTS
+│
+├── reports/
+├── logs/
+└── .runtime/
+
+FUXA HOST-MOUNTED DATA
+│
+├── fuxa/appdata/
+├── fuxa/db/
+├── fuxa/logs/
+└── fuxa/images/
+
+IMPORTANT:
+
+The current platform uses local EC2 / Docker persistence.
+
+It does not currently use a managed cloud data lake,
+managed object storage or cloud-native centralized observability service.
+
+========================================================================================================================
+10. CURRENT EXTERNAL DEMONSTRATION EXPOSURE
+===========================================
+
+DOCUMENTED MAIN EC2 DEMONSTRATION ENDPOINTS:
+
+┌──────────────┬──────────────────────┬────────────────────────────────┐
+│ TCP PORT     │ COMPONENT            │ CURRENT ROLE                   │
+├──────────────┼──────────────────────┼────────────────────────────────┤
+│ 22           │ SSH                  │ EC2 administration             │
+│ 3000         │ Grafana              │ Monitoring / dashboard         │
+│ 8086         │ InfluxDB             │ Time-series API                │
+│ 1883         │ Mosquitto            │ MQTT broker                    │
+│ 4840         │ OPC-UA server        │ Industrial simulation          │
+│ 5020         │ Modbus server        │ PLC/register simulation        │
+└──────────────┴──────────────────────┴────────────────────────────────┘
+
+FUXA :1881 is a Docker application endpoint.
+
+It is not part of the documented main EC2 Security Group list.
+
+IMPORTANT:
+
+These endpoints represent examination / demonstration exposure.
+
+They are NOT a production firewall or production internet-exposure
+recommendation.
+
+========================================================================================================================
+11. FUTURE HYBRID TARGET
+========================
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   FUTURE HYBRID TARGET                                                              │
+│                                                                                                                      │
+│   ┌─────────────────────────────────────┐       ┌────────────────────────────────────────────────────────────────┐   │
+│   │          OT / EDGE SITE             │       │                  CENTRAL CLOUD PLATFORM                       │   │
+│   │                                     │       │                                                                │   │
+│   │ Sensors / PLCs / Equipment          │       │ Central telemetry                                             │   │
+│   │                                     │       │ Long-term data                                                │   │
+│   │ Local protocol gateways             │◄─────►│ Central analytics                                             │   │
+│   │                                     │       │ Monitoring / dashboards                                      │   │
+│   │ Local MQTT                          │       │ Security operations                                          │   │
+│   │                                     │       │ Compliance / evidence                                        │   │
+│   │ Local Edge AI                       │       │ Audit / reporting                                            │   │
+│   │                                     │       │ Enterprise identity                                          │   │
+│   │ Local safety decision support       │       │ Centralized governance                                       │   │
+│   │                                     │       │                                                                │   │
+│   │ Industrial protocols                │       │ High availability                                            │   │
+│   └──────────────────┬──────────────────┘       └───────────────────────────────┬────────────────────────────────┘   │
+│                      │                                                            │                                    │
+│                      │                 CONTROLLED HYBRID                         │                                    │
+│                      └────────────────────── CONNECTIVITY ──────────────────────┘                                    │
+│                                                                                                                      │
+│             Future controls: private networking • OT/IT segmentation • encryption • restricted access             │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+IMPORTANT:
+
+The future hybrid target is conceptual.
+
+Specific managed cloud products are intentionally not claimed unless
+implemented and validated in the repository.
+
+========================================================================================================================
+12. FUTURE OT / EDGE RESPONSIBILITIES
+=====================================
+
+The OT / Edge environment should retain workloads where low latency,
+local availability and operational continuity are important.
+
+TARGET EDGE RESPONSIBILITIES:
+
+• Sensor ingestion
+• Local MQTT / messaging
+• Industrial protocol communication
+• Local validation
+• Local Edge AI
+• Local process-state awareness
+• Local safety decision support
+• Local buffering during cloud connectivity loss
+• Local operational visualization
+• Time-sensitive process decisions
+
+TARGET PRINCIPLE:
+
+```
+                CLOUD CONNECTIVITY LOST
+                          │
+                          ▼
+                   EDGE CONTINUES
+                          │
+         ┌────────────────┼────────────────┐
+         │                │                │
+         ▼                ▼                ▼
+      Telemetry       Validation       Local AI
+         │                │                │
+         └────────────────┼────────────────┘
+                          ▼
+                Local operational state
+```
+
+IMPORTANT:
+
+This is a future architectural principle.
+
+The current repository is a single EC2 demonstration platform and
+does not implement a physically distributed OT site.
+
+========================================================================================================================
+13. FUTURE CENTRAL CLOUD RESPONSIBILITIES
+=========================================
+
+The central cloud platform is intended to provide capabilities that
+benefit from centralization and scalable resources.
+
+TARGET CLOUD RESPONSIBILITIES:
+
+• Central telemetry aggregation
+• Long-term historical storage
+• Cross-site analytics
+• Central monitoring
+• Security operations
+• Central audit evidence
+• Compliance reporting
+• Supply-chain analytics
+• Enterprise identity
+• Centralized governance
+• Backup / recovery
+• High-availability services
+• Fleet / configuration management
+• Centralized dashboards
+
+TARGET DATA DIRECTION:
+
+OT / EDGE
+│
+├── Telemetry
+├── Security events
+├── Process evidence
+├── EHS evidence
+└── Supply-chain evidence
+│
+▼
+CONTROLLED CLOUD
+│
+├── Central storage
+├── Analytics
+├── Security operations
+├── Reporting
+└── Governance
+
+========================================================================================================================
+14. HYBRID DATA FLOW
+====================
+
+```
+                OT / EDGE SITE
+                     │
+      ┌──────────────┼──────────────┐
+      │              │              │
+      ▼              ▼              ▼
+   Telemetry     Security        Evidence
+      │              │              │
+      └──────────────┼──────────────┘
+                     │
+                     ▼
+             SECURE HYBRID LINK
+                     │
+                     ▼
+             CENTRAL CLOUD
+                     │
+      ┌──────────────┼──────────────┐
+      │              │              │
+      ▼              ▼              ▼
+   Storage        Analytics     Governance
+      │              │              │
+      └──────────────┼──────────────┘
+                     ▼
+            Central monitoring
+            / reporting / audit
+```
+
+IMPORTANT:
+
+A03 remains authoritative for detailed data movement.
+
+A06 only describes the cloud / hybrid placement and evolution of
+those data flows.
+
+========================================================================================================================
+15. FUTURE SECURITY EVOLUTION
+=============================
+
+CURRENT:
+
+Single EC2 demonstration environment
+│
+├── Docker bridge network
+├── Host Python services
+├── Demonstration endpoints
+└── A05 security controls
+
+FUTURE TARGET:
+
+```
+             ENTERPRISE / HYBRID SECURITY
+                        │
+      ┌─────────────────┼─────────────────┐
+      │                 │                 │
+      ▼                 ▼                 ▼
+   OT/EDGE          HYBRID LINK        CLOUD
+      │                 │                 │
+      ▼                 ▼                 ▼
+```
+
+Local controls      Encryption       Central security
+Segmentation        Restricted       operations
+Least privilege     connectivity    Identity / access
+Local validation                    Central audit
+Central governance
+
+TARGET SECURITY PRINCIPLES:
+
+• OT / IT separation
+• Least privilege
+• Strong identity
+• Restricted connectivity
+• Encryption in transit
+• Encryption at rest
+• Central auditability
+• Local resilience
+• Security monitoring
+• Controlled administrative access
+
+IMPORTANT:
+
+These are future architectural controls.
+
+They are not represented as fully implemented enterprise controls
+in the current repository.
+
+========================================================================================================================
+16. CURRENT → FUTURE COMPONENT MAPPING
+======================================
+
+┌───────────────────────────────┬─────────────────────────────────────────────┐
+│ CURRENT COMPONENT              │ FUTURE HYBRID EVOLUTION                    │
+├───────────────────────────────┼─────────────────────────────────────────────┤
+│ EC2 host                      │ OT/Edge site + cloud platform               │
+│ Docker Compose                │ Edge runtime + cloud workloads              │
+│ Mosquitto                     │ Local MQTT + controlled cloud ingestion     │
+│ InfluxDB                      │ Edge buffering + central time-series store  │
+│ Grafana                       │ Edge / central monitoring                    │
+│ FUXA                          │ Local HMI / OT visualization                 │
+│ Edge Gateway                  │ Local industrial edge gateway               │
+│ Custom Edge AI                │ Local low-latency Edge AI                   │
+│ OPC-UA                        │ Local OT protocol integration               │
+│ Modbus                        │ Local PLC/OT integration                    │
+│ Recipe integrity              │ Local integrity + centralized evidence     │
+│ Supply-chain ledger           │ Site evidence + central traceability        │
+│ EHS engine                    │ Local safety logic + central governance     │
+│ Suricata demonstration       │ Edge/OT IDS + centralized security ops      │
+│ DevSecOps                     │ Distributed CI/CD security controls         │
+│ Reports / audit               │ Centralized evidence / governance           │
+└───────────────────────────────┴─────────────────────────────────────────────┘
+
+IMPORTANT:
+
+The right-hand column describes architectural evolution, not current
+repository implementation.
+
+========================================================================================================================
+17. ARCHITECTURAL RESPONSIBILITY MATRIX
+=======================================
+
+A01
+↓
+WHAT EXISTS FUNCTIONALLY?
+
+A02
+↓
+WHERE DOES IT RUN TODAY?
+
+A03
+↓
+HOW DOES DATA MOVE?
+
+A04
+↓
+HOW ARE OPERATIONS EXECUTED?
+
+A05
+↓
+HOW IS THE PLATFORM PROTECTED?
+
+A06
+↓
+HOW CAN THE CURRENT EC2 PLATFORM EVOLVE
+INTO A CONTROLLED HYBRID / CLOUD ARCHITECTURE?
+
+Therefore:
+
+A01 → WHAT
+A02 → WHERE
+A03 → DATA
+A04 → HOW
+A05 → SECURITY
+A06 → EVOLUTION
+
+========================================================================================================================
+18. RELATION TO A01–A05
+=======================
+
+A01 — SYSTEM ARCHITECTURE
+
+A01 defines the functional Topic 127 platform components.
+
+A06 does not redefine these components.
+
+A06 explains how the current implementation can evolve from a
+single EC2 environment toward distributed OT / Edge and central cloud.
+
+---
+
+A02 — NETWORK / DEPLOYMENT ARCHITECTURE
+
+A02 is authoritative for the current AWS EC2 deployment, Docker
+bridge network, host-side Python services and current endpoint placement.
+
+A06 uses this current deployment as its starting point.
+
+---
+
+A03 — DATA FLOW ARCHITECTURE
+
+A03 is authoritative for detailed telemetry, validation, AI,
+industrial-process, recipe, supply-chain, EHS and evidence data flows.
+
+A06 only shows the high-level cloud / hybrid movement required to
+evolve those flows.
+
+---
+
+A04 — PROCESS / OPERATIONAL WORKFLOWS
+
+A04 is authoritative for operational execution order, demonstrations,
+validation workflows and examination orchestration.
+
+A06 does not redefine those workflows.
+
+---
+
+A05 — SECURITY ARCHITECTURE
+
+A05 is authoritative for trust boundaries, security controls,
+security evidence, IDS demonstrations, recipe integrity, supply-chain
+security, EHS security and DevSecOps.
+
+A06 only shows how those controls may evolve into a future hybrid
+security architecture.
+
+========================================================================================================================
+19. IMPLEMENTATION / TARGET STATUS
+==================================
+
+CURRENTLY IMPLEMENTED
+
+[IMPLEMENTED]
+
+• AWS EC2 / Ubuntu
+• Docker Engine / Docker Compose
+• Docker bridge network
+• Mosquitto
+• InfluxDB
+• Grafana
+• FUXA
+• Host-side Python services
+• Edge Gateway
+• Custom rule-based Edge AI
+• MQTT-to-InfluxDB writer
+• OPC-UA server
+• Modbus server
+• Industrial validators
+• Recipe integrity
+• Supply-chain / material-risk workflows
+• EHS
+• Audit / Incident / Compliance
+• DevSecOps
+• Controlled Suricata demonstration
+• scikit-learn demonstration
+• TensorFlow/Keras demonstration
+
+FUTURE TARGET
+
+[TARGET / NOT CURRENTLY DEPLOYED]
+
+• Distributed OT / Edge environment
+• Physical sensors / PLCs / equipment
+• Local edge infrastructure
+• Controlled OT-to-cloud connectivity
+• Central cloud telemetry platform
+• Centralized long-term storage
+• Centralized analytics
+• Central security operations
+• Enterprise identity
+• Central governance
+• High-availability cloud services
+• Cross-site monitoring
+• Centralized evidence management
+
+========================================================================================================================
+20. ARCHITECTURAL LIMITATIONS
+=============================
+
+The current repository is intentionally an educational / simulated
+proof-of-concept environment.
+
+Current limitations include:
+
+• Single EC2 host
+• Software-simulated industrial equipment
+• Software-simulated cleanroom sensors
+• Host-side industrial protocol simulators
+• Docker Compose rather than Kubernetes
+• Demonstration-oriented external endpoints
+• Controlled rather than continuous Suricata monitoring
+• Separate executable ML demonstrations
+• Rule-based Custom Edge AI
+• Local persistence rather than managed cloud storage
+• No production multi-site deployment
+• No implemented cloud disaster-recovery architecture
+• No implemented multi-AZ application architecture
+• No implemented enterprise cloud identity platform
+
+These limitations are intentional and must not be interpreted as
+missing components of the current proof-of-concept.
+
+========================================================================================================================
+21. FINAL CLOUD / HYBRID ARCHITECTURE STATEMENT
+===============================================
+
+CURRENT TOPIC 127 PLATFORM:
+
+```
+                AWS EC2
+                   │
+          ┌────────┴────────┐
+          │                 │
+    Docker / Compose   Host Python
+          │                 │
+          ├── Mosquitto    ├── Edge Gateway
+          ├── InfluxDB     ├── Custom Edge AI
+          ├── Grafana      ├── MQTT → Influx
+          ├── FUXA         ├── OPC-UA
+          └── Suricata*    ├── Modbus
+                           ├── Security
+                           ├── EHS
+                           ├── Supply Chain
+                           ├── Compliance
+                           └── Reporting
+```
+
+FUTURE HYBRID TARGET:
+
+```
+          OT / EDGE SITE
+                │
+      ┌─────────┼─────────┐
+      │         │         │
+   Sensors    PLC/OT    Edge AI
+      │         │         │
+      └─────────┼─────────┘
+                │
+         Secure Connectivity
+                │
+                ▼
+         CENTRAL CLOUD
+                │
+    ┌───────────┼───────────┐
+    │           │           │
+ Storage     Analytics   Security
+    │           │           │
+    └───────────┼───────────┘
+                │
+          Governance /
+         Compliance /
+            Evidence
+```
+
+FINAL POSITION:
+
+The Topic 127 repository currently implements a single-host AWS EC2
+educational platform using Docker Compose and host-side Python services.
+
+A06 defines a controlled architectural evolution toward a hybrid model
+in which latency-sensitive industrial, safety and Edge AI functions
+remain close to the OT environment while centralized analytics,
+long-term storage, security operations, governance and evidence
+management can evolve into a central cloud platform.
+
+The future hybrid architecture is a TARGET ARCHITECTURE only.
+
+No unimplemented AWS managed service, Kubernetes platform, multi-site
+deployment, high-availability topology or enterprise cloud control is
+represented as currently implemented.
+
+========================================================================================================================
+END OF A06
+==========
