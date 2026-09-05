@@ -215,6 +215,33 @@ apt_package_available() {
 }
 
 # ----------------------------------------------------------------
+# Install Trivy security scanner
+# ----------------------------------------------------------------
+
+install_trivy() {
+    if command -v trivy >/dev/null 2>&1; then
+        echo "Trivy is already installed:"
+        trivy --version
+        return 0
+    fi
+
+    echo "Installing Trivy..."
+
+    wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key |
+        gpg --dearmor |
+        sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+
+    echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" |
+        sudo tee /etc/apt/sources.list.d/trivy.list > /dev/null
+
+    sudo apt-get update
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y trivy
+
+    echo "Trivy installation verified:"
+    trivy --version
+}
+
+# ----------------------------------------------------------------
 # Install Python using apt
 # ----------------------------------------------------------------
 
@@ -656,6 +683,8 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
     docker.io \
     docker-compose-v2 \
     mosquitto-clients
+
+install_trivy
 
 # ----------------------------------------------------------------
 # Step 3: Install and validate Python 3.12

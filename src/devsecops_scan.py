@@ -19,7 +19,15 @@ else:
     commands.append(None)
 
 if shutil.which("trivy"):
-    commands.append(["trivy", "fs", ".", "--severity", "HIGH,CRITICAL"])
+    commands.append([
+        "trivy",
+        "fs",
+        "--skip-dirs",
+        "venv",
+        ".",
+        "--severity",
+        "HIGH,CRITICAL",
+    ])
 else:
     commands.append(None)
 
