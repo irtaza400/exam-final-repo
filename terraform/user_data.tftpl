@@ -37,7 +37,27 @@ chown -R ubuntu:ubuntu "$REPO_DIR"
 
 echo "===== Running existing EC2 dependency installer ====="
 
-sudo -u ubuntu -H bash -lc "cd '$REPO_DIR' && chmod +x scripts/install_ec2_dependencies.sh && ./scripts/install_ec2_dependencies.sh"
+echo "===== Running existing EC2 dependency installer ====="
+
+# Run the installer explicitly as ubuntu while removing inherited sudo
+# identity variables so the installer cannot mistakenly target root.
+sudo -u ubuntu -H env -u SUDO_USER -u SUDO_UID -u SUDO_GID bash -lc "cd '$REPO_DIR' && chmod +x scripts/install_ec2_dependencies.sh && ./scripts/install_ec2_dependencies.sh"
+
+echo "===== Enforcing Docker access for ubuntu ====="
+
+if ! getent group docker >/dev/null 2>&1; then
+    echo "Docker group was not found; creating it..."
+    groupadd docker
+fi
+
+usermod -aG docker ubuntu
+
+if id -nG ubuntu | tr ' ' '\n' | grep -qx "docker"; then
+    echo "Verified: ubuntu is a member of the docker group."
+else
+    echo "ERROR: Failed to add ubuntu to the docker group."
+    exit 1
+fi
 
 echo "===== Bootstrap completed successfully ====="
 date
