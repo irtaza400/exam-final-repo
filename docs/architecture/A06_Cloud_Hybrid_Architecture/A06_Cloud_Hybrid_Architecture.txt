@@ -40,15 +40,23 @@ The Topic 127 platform follows a controlled evolution model:
 CURRENT IMPLEMENTATION
 │
 ▼
-AWS EC2 / Ubuntu
+Terraform Option B
 │
-├── Docker Compose
-├── Docker bridge network
-├── Host-side Python services
-├── Industrial protocol simulators
-├── Monitoring / visualization
-├── AI / ML demonstrations
-└── Security / evidence workflows
+├── AWS VPC
+├── Public Subnet
+├── Internet Gateway
+├── Public Route Table
+├── Route Table Association
+├── Security Group
+└── EC2 / Ubuntu
+         │
+         ├── Docker Compose
+         ├── Docker bridge network
+         ├── Host-side Python services
+         ├── Industrial protocol simulators
+         ├── Monitoring / visualization
+         ├── AI / ML demonstrations
+         └── Security / evidence workflows
 │
 ▼
 FUTURE HYBRID TARGET
@@ -101,7 +109,7 @@ It is NOT currently deployed by this repository.
 │  │                                   Persistent / runtime evidence                                                 │  │
 │  └────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────┘  │
 │                                                       │                                                               │
-│                       Demonstration exposure: 22 / 3000 / 8086 / 1883 / 4840 / 5020                                │
+│                  External SG exposure: 22 / 3000 / 1881                                                               │
 └───────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────┘
 │
 │ FUTURE EVOLUTION
@@ -113,6 +121,9 @@ It is NOT currently deployed by this repository.
 
 CURRENTLY IMPLEMENTED:
 
+• Terraform Option B infrastructure provisioning
+• AWS VPC / public subnet / Internet Gateway / public route table
+• AWS Security Group
 • AWS EC2
 • Ubuntu Linux
 • Docker Engine / Docker Compose
@@ -142,24 +153,28 @@ CURRENTLY IMPLEMENTED:
 CURRENT DEPLOYMENT MODEL:
 
 ```
-                AWS EC2
-                   │
-      ┌────────────┴────────────┐
-      │                         │
-      ▼                         ▼
+Terraform Option B
+       │
+       ▼
+AWS VPC
+       │
+       ▼
+Public Subnet
+       │
+       ▼
+Internet Gateway + Public Route Table
+       │
+       ▼
+Security Group
+       │
+       ▼
+AWS EC2 / Ubuntu
+       │
+      ┌┴─────────────────────────────┐
+      │                              │
+      ▼                              ▼
+Docker / Compose              Host Python Runtime
 ```
-
-Docker / Compose          Host Python Runtime
-│                         │
-▼                         ▼
-topic127-network          Industrial / analytics /
-│                evidence services
-│                         │
-└────────────┬────────────┘
-│
-▼
-Topic 127 Platform
-
 IMPORTANT:
 
 The repository does NOT currently implement:
@@ -422,29 +437,37 @@ managed object storage or cloud-native centralized observability service.
 10. CURRENT EXTERNAL DEMONSTRATION EXPOSURE
 ===========================================
 
-DOCUMENTED MAIN EC2 DEMONSTRATION ENDPOINTS:
+EXTERNAL / ADMIN ACCESS — TERRAFORM OPTION B:
 
 ┌──────────────┬──────────────────────┬────────────────────────────────┐
 │ TCP PORT     │ COMPONENT            │ CURRENT ROLE                   │
 ├──────────────┼──────────────────────┼────────────────────────────────┤
 │ 22           │ SSH                  │ EC2 administration             │
 │ 3000         │ Grafana              │ Monitoring / dashboard         │
-│ 8086         │ InfluxDB             │ Time-series API                │
+│ 1881         │ FUXA                 │ HMI / SCADA-style demo         │
+└──────────────┴──────────────────────┴────────────────────────────────┘
+
+INTERNAL / EC2-LOCAL LAB ENDPOINTS:
+
+┌──────────────┬──────────────────────┬────────────────────────────────┐
+│ TCP PORT     │ COMPONENT            │ CURRENT ROLE                   │
+├──────────────┼──────────────────────┼────────────────────────────────┤
 │ 1883         │ Mosquitto            │ MQTT broker                    │
+│ 8086         │ InfluxDB             │ Time-series API                │
 │ 4840         │ OPC-UA server        │ Industrial simulation          │
 │ 5020         │ Modbus server        │ PLC/register simulation        │
 └──────────────┴──────────────────────┴────────────────────────────────┘
 
-FUXA :1881 is a Docker application endpoint.
+The Terraform Option B Security Group externally permits SSH, Grafana and FUXA
+for the configured administrator CIDR.
 
-It is not part of the documented main EC2 Security Group list.
+Mosquitto, InfluxDB, OPC-UA and Modbus are used by the EC2-hosted laboratory
+and are not externally opened by the current Terraform Security Group.
 
 IMPORTANT:
 
-These endpoints represent examination / demonstration exposure.
-
-They are NOT a production firewall or production internet-exposure
-recommendation.
+These endpoints represent examination / demonstration behavior.
+They are not a recommendation for unrestricted production internet exposure.
 
 ========================================================================================================================
 11. FUTURE HYBRID TARGET

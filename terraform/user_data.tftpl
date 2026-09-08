@@ -1,0 +1,63 @@
+#!/bin/bash
+
+set -Eeuo pipefail
+
+exec > >(tee -a /var/log/topic127-terraform-bootstrap.log | logger -t topic127-bootstrap -s 2>/dev/console) 2>&1
+
+REPO_URL="${repo_url}"
+REPO_BRANCH="${repo_branch}"
+REPO_DIR="/home/ubuntu/exam-final-repo"
+
+echo "===== Topic 127 Terraform Bootstrap ====="
+date
+echo "Repository : $REPO_URL"
+echo "Branch     : $REPO_BRANCH"
+echo "Target     : $REPO_DIR"
+
+export DEBIAN_FRONTEND=noninteractive
+
+echo "===== Installing bootstrap prerequisites ====="
+apt-get update
+apt-get install -y git ca-certificates
+
+echo "===== Cloning repository ====="
+
+if [[ -d "$REPO_DIR/.git" ]]; then
+    echo "Repository already exists; skipping clone."
+elif [[ -d "$REPO_DIR" ]]; then
+    echo "Repository directory exists but is not a Git checkout."
+    echo "Aborting to avoid overwriting existing content."
+    exit 1
+else
+    sudo -u ubuntu -H git clone --branch "$REPO_BRANCH" --single-branch "$REPO_URL" "$REPO_DIR"
+fi
+
+echo "===== Setting repository ownership ====="
+chown -R ubuntu:ubuntu "$REPO_DIR"
+
+echo "===== Running existing EC2 dependency installer ====="
+
+echo "===== Running existing EC2 dependency installer ====="
+
+# Run the installer explicitly as ubuntu while removing inherited sudo
+# identity variables so the installer cannot mistakenly target root.
+sudo -u ubuntu -H env -u SUDO_USER -u SUDO_UID -u SUDO_GID bash -lc "cd '$REPO_DIR' && chmod +x scripts/install_ec2_dependencies.sh && ./scripts/install_ec2_dependencies.sh"
+
+echo "===== Enforcing Docker access for ubuntu ====="
+
+if ! getent group docker >/dev/null 2>&1; then
+    echo "Docker group was not found; creating it..."
+    groupadd docker
+fi
+
+usermod -aG docker ubuntu
+
+if id -nG ubuntu | tr ' ' '\n' | grep -qx "docker"; then
+    echo "Verified: ubuntu is a member of the docker group."
+else
+    echo "ERROR: Failed to add ubuntu to the docker group."
+    exit 1
+fi
+
+echo "===== Bootstrap completed successfully ====="
+date

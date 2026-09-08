@@ -478,71 +478,111 @@ exam-final-repo/
 
 # 15. Deployment Environment
 
-The primary demonstration environment is:
+The current AWS demonstration environment is provisioned using **Terraform Option B**.
 
 ```text
-AWS EC2
-   │
-   ▼
-Ubuntu
-   │
-   ▼
-Python Virtual Environment
-   │
-   ▼
-Docker Compose
-   │
-   ├── Mosquitto
-   ├── InfluxDB
-   ├── Grafana
-   ├── FUXA
-   └── Optional Suricata Security Demo
+Terraform
+   ↓
+AWS VPC
+   ↓
+Public Subnet
+   ↓
+Internet Gateway + Public Route Table
+   ↓
+Security Group
+   ↓
+EC2 / Ubuntu
+   ↓
+Docker Compose + Host-side Python
+   ↓
+Topic 127 Laboratory
 ```
 
-Python-based industrial and AI services run alongside the containerized infrastructure.
+Terraform creates the required AWS infrastructure instead of assuming that a suitable VPC and subnet already exist.
+
+The EC2 bootstrap then prepares the laboratory automatically.
 
 ---
 
 # 16. Initial EC2 Setup
 
-Clone the repository and enter the project directory:
+For a fresh AWS environment, Terraform Option B provisions the EC2 and its required network infrastructure.
+
+Prerequisites:
+
+* AWS credentials with permission to create the required EC2/VPC resources
+* Terraform 1.16 or newer
+* An existing EC2 key pair in the selected AWS region
+* The corresponding private `.pem` key
+* Your current public IPv4 address in `/32` CIDR notation
+
+From the local workstation, enter the Terraform directory:
 
 ```bash
-git clone https://github.com/irtaza400/exam-final-repo.git
-cd exam-final-repo
+cd exam-final-repo/terraform
 ```
 
-Make scripts executable:
+Create the local variables file:
 
 ```bash
-chmod +x scripts/*.sh
+cp terraform.tfvars.example terraform.tfvars
 ```
 
-Install required dependencies:
+Set the environment-specific values in `terraform.tfvars`:
+
+```text
+key_name   = "YOUR_EC2_KEY_PAIR_NAME"
+admin_cidr = "YOUR.PUBLIC.IP.ADDRESS/32"
+```
+
+Initialize and validate Terraform:
 
 ```bash
-./scripts/install_ec2_dependencies.sh
+terraform init
+terraform validate
 ```
 
-Create the environment file if required:
+Create and review the infrastructure plan:
 
 ```bash
-cp .env.example .env
+terraform plan -out=option-b.tfplan
 ```
 
-Review `.env` before starting the platform.
+Apply the reviewed plan:
+
+```bash
+terraform apply option-b.tfplan
+```
+
+Terraform creates the VPC, public subnet, Internet Gateway, route table, route association, Security Group and EC2 instance.
+
+The EC2 bootstrap then automatically clones the repository and prepares the Python, Docker and Compose environment.
 
 ---
 
 # 17. Start the Platform
 
-The primary platform startup workflow is:
+After Terraform has provisioned the EC2 instance and the bootstrap has completed, connect to the EC2 instance and enter the automatically cloned repository:
 
 ```bash
-./scripts/run_complete_lab.sh
+cd ~/exam-final-repo
 ```
 
-This workflow starts the infrastructure and supporting monitoring/validation services required by the laboratory demonstration.
+For the formal examination workflow, run:
+
+```bash
+bash ./scripts/run_exam_demo.sh
+```
+
+This is the primary one-command examiner workflow. It validates the repository, starts the Docker infrastructure, runs the complete Topic 127 laboratory, executes the controlled security demonstrations, and generates examination evidence and reports.
+
+For direct laboratory execution without the full examiner wrapper, the underlying workflow remains available:
+
+```bash
+bash ./scripts/run_complete_lab.sh
+```
+
+The EC2 bootstrap has already installed the required Python, Docker and Compose environment, so manual dependency installation is not required for the Terraform Option B deployment.
 
 ---
 
@@ -590,14 +630,24 @@ The exact available scripts should be checked against the current repository bef
 
 # 20. Default Services
 
-| Service  | Default Endpoint       | Purpose                       |
-| -------- | ---------------------- | ----------------------------- |
-| MQTT     | `localhost:1883`       | IoT telemetry                 |
-| InfluxDB | `http://<EC2-IP>:8086` | Time-series storage           |
-| Grafana  | `http://<EC2-IP>:3000` | Monitoring                    |
-| FUXA     | `http://<EC2-IP>:1881` | HMI/SCADA-style visualization |
-| OPC-UA   | `<EC2-IP>:4840`        | Industrial process simulation |
-| Modbus   | `<EC2-IP>:5020`        | PLC/process simulation        |
+| Service  | Default Endpoint       | Current Exposure / Purpose                  |
+| -------- | ---------------------- | ------------------------------------------- |
+| MQTT     | `localhost:1883`       | EC2-local/internal IoT telemetry            |
+| InfluxDB | `http://<EC2-IP>:8086` | EC2-local/internal time-series storage      |
+| Grafana  | `http://<EC2-IP>:3000` | External admin-facing dashboard             |
+| FUXA     | `http://<EC2-IP>:1881` | External admin-facing HMI/SCADA demo        |
+| OPC-UA   | `127.0.0.1:4840`       | EC2-local/internal industrial simulation   |
+| Modbus   | `127.0.0.1:5020`       | EC2-local/internal PLC simulation          |
+
+Terraform Option B externally permits only:
+
+```text
+22   SSH
+3000 Grafana
+1881 FUXA
+```
+
+The MQTT, InfluxDB, OPC-UA and Modbus endpoints are used by the EC2-hosted laboratory workflow and are not opened by the current Terraform Security Group for external administrator access.
 
 ---
 

@@ -81,3 +81,17 @@ suricata/logs/*
 
 suricata/pcaps/*
 !suricata/pcaps/.gitkeep
+
+################################################
+# Terraform
+################################################
+
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/crash.log
+terraform/crash.*.log
+terraform/*.tfvars
+terraform/*.tfvars.json
+terraform/*.tfplan
+terraform/tfplan
