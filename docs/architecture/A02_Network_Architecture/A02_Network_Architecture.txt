@@ -32,7 +32,7 @@ A06 = current EC2 implementation → future hybrid/cloud target
                           │ • SSH / administration               │
                           │ • Browser access                     │
                           │ • Grafana monitoring                 │
-                          │ • FUXA demonstration (local / tunneled) │
+                          │ • FUXA browser / HMI demonstration │
                           │ • Validation / examination           │
                           └──────────────────┬───────────────────┘
                                              │
@@ -44,10 +44,7 @@ A06 = current EC2 implementation → future hybrid/cloud target
                           │                                      │
                           │ TCP 22   → SSH                       │
                           │ TCP 3000 → Grafana                   │
-                          │ TCP 8086 → InfluxDB                  │
-                          │ TCP 1883 → MQTT                      │
-                          │ TCP 4840 → OPC-UA                    │
-                          │ TCP 5020 → Modbus                    │
+                          │ TCP 1881 → FUXA                      │
                           └──────────────────┬───────────────────┘
                                              │
                                              ▼
@@ -494,7 +491,7 @@ Docker persistent service data and host-side runtime/report artifacts
 are separate storage mechanisms.
 
 ========================================================================================================================
-14. EXTERNAL DEMONSTRATION ENDPOINT MAP
+14. DEMONSTRATION ENDPOINT MAP
 =======================================
 
 ┌────────────────────┬─────────────────────────────┬─────────────────────────────────┐
@@ -509,17 +506,35 @@ are separate storage mechanisms.
 │ TCP 1881           │ FUXA                       │ HMI / Docker application        │
 └────────────────────┴─────────────────────────────┴─────────────────────────────────┘
 
-DOCUMENTED MAIN EC2 SECURITY GROUP DEMONSTRATION LIST:
+EXTERNAL / ADMIN ACCESS — TERRAFORM OPTION B:
 
-22 / 3000 / 8086 / 1883 / 4840 / 5020
+22 / 3000 / 1881
 
-FUXA :1881 is an application endpoint in the current Docker deployment,
-but it is not included in the documented main Security Group list.
+INTERNAL / EC2-LOCAL LAB ENDPOINTS:
+
+1883 / 8086 / 4840 / 5020
+
+The Terraform Option B Security Group externally permits SSH, Grafana and FUXA
+for the configured administrator CIDR.
+
+Mosquitto, InfluxDB, OPC-UA and Modbus are used by the EC2-hosted laboratory
+and are not externally opened by the current Terraform Security Group.
 
 ========================================================================================================================
 15. DEPLOYMENT MAP — CURRENT IMPLEMENTATION
 ===========================================
 
+Terraform Option B
+│
+├── AWS VPC
+├── Public Subnet
+├── Internet Gateway
+├── Public Route Table
+├── Route Table Association
+├── Security Group
+└── EC2 / Ubuntu
+      │
+      ▼
 AWS EC2
 │
 ├── Ubuntu Linux
