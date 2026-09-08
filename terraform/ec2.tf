@@ -1,8 +1,8 @@
-resource "aws_instance" "terraform_experiment" {
-  ami                         = var.ami_id
+resource "aws_instance" "terraform_option_b" {
+  ami                         = data.aws_ssm_parameter.ubuntu_2404_amd64.value
   instance_type               = var.instance_type
-  subnet_id                   = data.aws_subnet.existing.id
-  vpc_security_group_ids      = [aws_security_group.terraform_experiment.id]
+  subnet_id                   = aws_subnet.public.id
+  vpc_security_group_ids      = [aws_security_group.terraform_option_b.id]
   key_name                    = var.key_name
   associate_public_ip_address = true
 
@@ -24,8 +24,8 @@ resource "aws_instance" "terraform_experiment" {
   }
 
   tags = {
-    Name       = "topic127-terraform-experiment"
-    Purpose    = "Terraform Option A"
+    Name       = "topic127-terraform-option-b"
+    Purpose    = "Terraform Option B"
     BaseBranch = var.project_branch
   }
 }

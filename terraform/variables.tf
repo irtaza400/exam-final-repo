@@ -1,37 +1,51 @@
 variable "aws_region" {
-  description = "AWS region used by the Terraform experiment."
+  description = "AWS region used by the Terraform Option B deployment."
   type        = string
   default     = "us-east-1"
 }
 
-variable "vpc_id" {
-  description = "Existing VPC ID to reuse. Terraform does not create or manage this VPC."
+variable "vpc_cidr" {
+  description = "IPv4 CIDR block for the Terraform-managed VPC."
   type        = string
-  default     = "vpc-05f48cac498c5a1d3"
+  default     = "10.127.0.0/16"
+
+  validation {
+    condition     = can(cidrhost(var.vpc_cidr, 0))
+    error_message = "vpc_cidr must be a valid IPv4 CIDR block."
+  }
 }
 
-variable "subnet_id" {
-  description = "Existing subnet ID to reuse. Terraform does not create or manage this subnet."
+variable "public_subnet_cidr" {
+  description = "IPv4 CIDR block for the Terraform-managed public subnet."
   type        = string
-  default     = "subnet-0a5124faa4548ffb6"
+  default     = "10.127.1.0/24"
+
+  validation {
+    condition     = can(cidrhost(var.public_subnet_cidr, 0))
+    error_message = "public_subnet_cidr must be a valid IPv4 CIDR block."
+  }
 }
 
-variable "ami_id" {
-  description = "Verified Ubuntu 24.04 LTS amd64 AMI in us-east-1."
+variable "availability_zone" {
+  description = "Optional AWS Availability Zone for the public subnet. Leave null to let AWS select one."
   type        = string
-  default     = "ami-0f8a61b66d1accaee"
+  default     = null
 }
 
 variable "instance_type" {
-  description = "EC2 instance type for the Terraform experiment."
+  description = "EC2 instance type for the Terraform Option B deployment."
   type        = string
   default     = "t3.large"
 }
 
 variable "key_name" {
-  description = "Existing AWS EC2 key pair name."
+  description = "Existing AWS EC2 key pair name used for SSH access."
   type        = string
-  default     = "project_key"
+
+  validation {
+    condition     = trimspace(var.key_name) != ""
+    error_message = "key_name must not be empty."
+  }
 }
 
 variable "root_volume_size" {
@@ -56,9 +70,9 @@ variable "admin_cidr" {
 }
 
 variable "project_branch" {
-  description = "Repository branch cloned by the EC2 bootstrap process."
+  description = "Repository branch cloned by the EC2 bootstrap process for the laboratory."
   type        = string
-  default     = "terraform-experiment"
+  default     = "main"
 }
 
 variable "repo_url" {

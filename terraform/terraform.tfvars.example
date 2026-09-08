@@ -1,12 +1,15 @@
 # Copy this file to terraform.tfvars.
 # terraform.tfvars is ignored by Git.
 
-aws_region      = "us-east-1"
-vpc_id          = "vpc-05f48cac498c5a1d3"
-subnet_id       = "subnet-0a5124faa4548ffb6"
-ami_id          = "ami-0f8a61b66d1accaee"
-instance_type   = "t3.large"
-key_name        = "project_key"
+aws_region         = "us-east-1"
+vpc_cidr           = "10.127.0.0/16"
+public_subnet_cidr = "10.127.1.0/24"
+
+# Leave null to let AWS select the Availability Zone.
+availability_zone = null
+
+instance_type    = "t3.large"
+key_name         = "REPLACE_WITH_YOUR_EC2_KEY_PAIR_NAME"
 root_volume_size = 30
 
 # Replace with your current public IPv4 address in CIDR notation.
@@ -14,5 +17,6 @@ root_volume_size = 30
 # admin_cidr = "203.0.113.25/32"
 admin_cidr = "REPLACE_WITH_YOUR_PUBLIC_IP/32"
 
-project_branch = "terraform-experiment"
+# The EC2 bootstraps the stable laboratory branch.
+project_branch = "main"
 repo_url       = "https://github.com/irtaza400/exam-final-repo.git"

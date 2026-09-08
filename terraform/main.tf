@@ -1,21 +1,16 @@
 provider "aws" {
-  region  = var.aws_region
-  profile = "terraform"
+  region = var.aws_region
 
   default_tags {
     tags = {
       Project     = "Topic127"
       Repository  = "exam-final-repo"
-      Environment = "terraform-experiment"
+      Environment = "terraform-option-b"
       ManagedBy   = "Terraform"
     }
   }
 }
 
-data "aws_vpc" "existing" {
-  id = var.vpc_id
-}
-
-data "aws_subnet" "existing" {
-  id = var.subnet_id
+data "aws_ssm_parameter" "ubuntu_2404_amd64" {
+  name = "/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id"
 }

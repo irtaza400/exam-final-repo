@@ -1,7 +1,7 @@
-resource "aws_security_group" "terraform_experiment" {
-  name        = "topic127-terraform-experiment"
-  description = "Security group for the isolated Topic 127 Terraform experiment"
-  vpc_id      = data.aws_vpc.existing.id
+resource "aws_security_group" "terraform_option_b" {
+  name        = "topic127-terraform-option-b"
+  description = "Security group for the isolated Topic 127 Terraform Option B environment"
+  vpc_id      = aws_vpc.topic127.id
 
   ingress {
     description = "SSH administration"
@@ -36,6 +36,6 @@ resource "aws_security_group" "terraform_experiment" {
   }
 
   tags = {
-    Name = "topic127-terraform-experiment-sg"
+    Name = "topic127-terraform-option-b-sg"
   }
 }
