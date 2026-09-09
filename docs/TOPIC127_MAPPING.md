@@ -5,8 +5,9 @@
 | IoT monitoring | Mosquitto MQTT |
 | Sensor time-series storage | InfluxDB |
 | Dashboard visualization | Grafana |
-| Cloud-native deployment | Docker Compose |
-| EC2 runnable platform | install/start scripts |
+| AWS infrastructure / IaC | Terraform Option B (`terraform/`) |
+| Application / container deployment | Docker Compose |
+| EC2 platform bootstrap / execution | Terraform `user_data.tftpl` + project scripts |
 
 ## Phase 2 Additions
 

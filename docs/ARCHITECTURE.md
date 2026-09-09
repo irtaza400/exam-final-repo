@@ -1,5 +1,59 @@
 # Topic 127 Version 3 Architecture
 
+## Current Cloud / Deployment Foundation — Terraform Option B
+
+The current examination deployment is provisioned using **Terraform Option B**.
+
+```text
+Terraform Option B
+        |
+        v
+AWS VPC
+        |
+        v
+Public Subnet
+        |
+        v
+Internet Gateway + Public Route Table
+        |
+        v
+AWS Security Group
+        |
+        v
+AWS EC2 / Ubuntu
+        |
+        v
+Docker Compose + Host-side Python
+        |
+        v
+Topic 127 Laboratory
+```
+
+Terraform Option B is the current infrastructure provisioning layer. The Topic 127 application remains the existing Docker Compose and host-side Python laboratory.
+
+### Network Exposure
+
+External administrator access is limited to:
+
+```text
+22    SSH
+3000  Grafana
+1881  FUXA
+```
+
+The following laboratory endpoints remain EC2-local/internal:
+
+```text
+1883  Mosquitto MQTT
+8086  InfluxDB
+4840  OPC-UA
+5020  Modbus
+```
+
+## Core Application Architecture
+
+
+
 ```text
 Cleanroom Sensors / Simulators
         |

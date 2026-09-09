@@ -423,6 +423,17 @@ exam-final-repo/
 │   ├── material_batches.json
 │   └── suppliers.json
 │
+├── terraform/
+│   ├── main.tf
+│   ├── network.tf
+│   ├── ec2.tf
+│   ├── security_group.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── user_data.tftpl
+│   ├── versions.tf
+│   └── terraform.tfvars.example
+│
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── EC2_DEPLOYMENT_GUIDE.md

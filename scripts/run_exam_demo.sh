@@ -539,7 +539,7 @@ echo "Grafana:"
 echo "  http://EC2-PUBLIC-IP:3000"
 echo
 echo "InfluxDB:"
-echo "  http://EC2-PUBLIC-IP:8086"
+echo "  http://127.0.0.1:8086"
 echo
 echo "Live monitoring logs:"
 echo "  tail -f logs/edge_gateway.log"
