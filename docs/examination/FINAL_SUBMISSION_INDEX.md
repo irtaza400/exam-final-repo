@@ -4,7 +4,7 @@
 **Repository:** `irtaza400/exam-final-repo`
 **GitHub:** https://github.com/irtaza400/exam-final-repo
 **Architecture baseline:** A01–A06 locked
-**Evidence baseline commit:** `0843e272a67afae569b58f856017d48990a27251`
+**Historical pre-Terraform evidence baseline commit:** `0843e272a67afae569b58f856017d48990a27251`
 
 ---
 
@@ -121,21 +121,21 @@ This document provides the navigation structure for the completed submission pac
 
 ---
 
-# 5. Final Demonstration Evidence
+# 5. Historical Pre-Terraform Demonstration Evidence
 
-The final integrated examiner demonstration was successfully executed using:
+A historical integrated examiner demonstration was successfully executed using:
 
 ```text
 scripts/run_exam_demo.sh
 ```
 
-The successful final demonstration was executed from repository commit:
+This demonstration was executed before Terraform Option B was merged into `main`:
 
 ```text
 0843e272a67afae569b58f856017d48990a27251
 ```
 
-Final demonstration timestamp:
+Historical demonstration timestamp:
 
 ```text
 2026-08-31T14:51:40Z
@@ -152,6 +152,14 @@ Master execution log:
 ```text
 logs/exam_demo_20260831T145140Z.log
 ```
+
+Current repository baseline:
+
+```text
+d810513 — Merge PR #4: Implement Terraform Option B as self-contained deployment
+```
+
+The current final deployment baseline is Terraform Option B. A fresh examiner demonstration and evidence capture should be generated from the current Terraform-backed `main` branch before final submission packaging.
 
 ---
 
