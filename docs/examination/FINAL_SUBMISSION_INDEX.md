@@ -683,9 +683,9 @@ Optional screenshots                 ✅
 Trivy focused evidence               ✅
 
 Final Submission Index               ✅ THIS DOCUMENT
-Complete local package               ⏳
+Complete local package               ✅
 Fresh EC2 reproducibility test       ✅
-Final examiner-readiness audit       ⏳
+Final examiner-readiness audit       ✅
 ```
 
 ---
