@@ -153,13 +153,13 @@ Master execution log:
 logs/exam_demo_20260831T145140Z.log
 ```
 
-Current repository baseline:
+Current repository branch:
 
 ```text
-d810513 — Merge PR #4: Implement Terraform Option B as self-contained deployment
+d65866937f7d98d0e2c817b21e79f04ac6934592 — runtime implementation baseline (Terraform Option B)
 ```
 
-The current final deployment baseline is Terraform Option B. A fresh examiner demonstration and evidence capture should be generated from the current Terraform-backed `main` branch before final submission packaging.
+The current final deployment baseline is Terraform Option B. The fresh examiner demonstration and evidence capture were completed on 2026-09-11 from the runtime implementation baseline commit d65866937f7d98d0e2c817b21e79f04ac6934592.
 
 ---
 
@@ -684,7 +684,7 @@ Trivy focused evidence               ✅
 
 Final Submission Index               ✅ THIS DOCUMENT
 Complete local package               ⏳
-Fresh EC2 reproducibility test       ⏳
+Fresh EC2 reproducibility test       ✅
 Final examiner-readiness audit       ⏳
 ```
 
