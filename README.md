@@ -644,7 +644,7 @@ The exact available scripts should be checked against the current repository bef
 | Service  | Default Endpoint       | Current Exposure / Purpose                  |
 | -------- | ---------------------- | ------------------------------------------- |
 | MQTT     | `localhost:1883`       | EC2-local/internal IoT telemetry            |
-| InfluxDB | `http://<EC2-IP>:8086` | EC2-local/internal time-series storage      |
+| InfluxDB | `http://localhost:8086` | EC2-local/internal time-series storage      |
 | Grafana  | `http://<EC2-IP>:3000` | External admin-facing dashboard             |
 | FUXA     | `http://<EC2-IP>:1881` | External admin-facing HMI/SCADA demo        |
 | OPC-UA   | `127.0.0.1:4840`       | EC2-local/internal industrial simulation   |
